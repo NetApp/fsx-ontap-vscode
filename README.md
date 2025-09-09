@@ -30,8 +30,7 @@ Please note: NetApp Chat participant AI analysis and responses should be verifie
 
 NetApp Chat participant AI generated templates may require customization for your specific use case. Please review and modify as needed before deploying to production. 
 
-For a full list of features, visit our [documentation](https://docs.aws.amazon.com/toolkit-for-vscode/latest/userguide/working-with-aws.html).
 
-Submit bug reports and feature requests on our [Github repository](https://github.com/aws/aws-toolkit-vscode/issues/new/choose).
+Submit bug reports and feature requests on our [Github repository](https://github.com/NetApp/fsx-ontap-vscode).
 
-[EULA](https://github.com/aws/aws-toolkit-vscode/issues/new/choose)
+[EULA](https://github.com/NetApp/fsx-ontap-vscode/blob/main/eula.txt)
