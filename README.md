@@ -3,7 +3,7 @@
 ## Getting Started
 1. Open the FS for ONTAP toolkit extension
 ![ssh](https://pricecalculator.fsxninjas.com/OpenToolkit.gif)
-2. Using the crentials ![CredentialsIcon](https://pricecalculator.fsxninjas.com/CredentialsIcon.png) button choose the AWS local profile you'd like to work with.
+2. Using the credentials ![CredentialsIcon](https://pricecalculator.fsxninjas.com/CredentialsIcon.png) button choose the AWS local profile you'd like to work with.
 ![credentials](https://pricecalculator.fsxninjas.com/Credential.gif)
 
 ## Features
