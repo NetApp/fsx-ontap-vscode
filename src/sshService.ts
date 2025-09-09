@@ -1,0 +1,178 @@
+import * as vscode from 'vscode';
+import * as path from 'path';
+
+export interface SSHConnectionInfo {
+    ip:  string; // IP address of the instance
+    host: string;
+    username?: string;          
+    connectionName: string;
+    endpointId?: string;
+}
+
+export class SSHService {
+    
+    static async sendCommandToTerminal(filesystem: any, command: string[]): Promise<string> {
+        // Get username
+        /*const username = await vscode.window.showInputBox({
+            prompt: 'Enter SSH username',
+            value: 'fsxadmin', // Default for FSx
+            placeHolder: 'e.g., fsxadmin'
+        });
+
+        // Get username
+        const password = await vscode.window.showInputBox({
+            prompt: 'Enter SSH password',
+            value: '', // Default for FSx
+            password: true
+        });
+
+        const connectionOptions = await vscode.window.showQuickPick([
+            { label: 'Direct', value: 'direct' },
+            { label: 'EC2 Instance Connect', value: 'tunneling' },
+        ], {
+            placeHolder: 'How do you want to connect?'
+        });
+
+        let endpointId: string | undefined;
+        if (connectionOptions?.value === 'tunneling') {
+            endpointId = await vscode.window.showInputBox({
+                prompt: 'Enter instance connect endpoint ID',
+                placeHolder: 'e.g., i-0123456789abcdef0'
+            });
+
+        }*/
+
+        const myTerm = vscode.window.createTerminal({
+            name: `SSH: ontap`,
+            iconPath: new vscode.ThemeIcon('terminal')
+        });
+
+        myTerm.show();
+        vscode.window.onDidChangeTerminalShellIntegration(async ({ terminal, shellIntegration }) => {
+            if (terminal === myTerm) {
+                const sshCommand = `ssh fsxadmin@management.fs-00018e6a0992b555a.fsx.us-east-1.amazonaws.com -o ProxyCommand='aws ec2-instance-connect open-tunnel --instance-connect-endpoint-id eice-009518b0a3ab6ac67 --private-ip-address 172.31.5.14' -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null`;
+                const e = shellIntegration.executeCommand(sshCommand);
+                vscode.window.onDidEndTerminalShellExecution(async event => {
+		           const sshLoginRes = [];
+                    for await (const data of e.read()) {
+                        sshLoginRes.push(data);
+                    }
+                    sshLoginRes.find(line => line.includes('Password:'));
+                    shellIntegration.executeCommand('Netapp234');
+		        });
+                
+                
+            }
+        });
+
+        return 'a';
+    }
+
+    static async sshToFileSystem(fileSystemId: string, fileSystemName: string, region: string, ip: string): Promise<void> {
+        try {
+           
+            // For now, we'll show a mock connection dialog
+            const connectionInfo = await this.getFileSystemConnectionInfo(fileSystemId, fileSystemName, region, ip);
+
+            if (connectionInfo) {
+                await this.establishSSHConnection(connectionInfo);
+            }
+        } catch (error) {
+            vscode.window.showErrorMessage(`Failed to SSH to file system: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        }
+    }
+
+    
+    /**
+     * Get connection information for a file system
+     */
+    private static async getFileSystemConnectionInfo(fileSystemId: string, fileSystemName: string, region: string, ip: string): Promise<SSHConnectionInfo | undefined> {
+
+        const selectedInstance = `management.${fileSystemId}.fsx.${region}.amazonaws.com`;
+        // Get SSH connection details
+        return await this.promptForConnectionDetails(selectedInstance, fileSystemName, ip);
+    }
+
+    /**
+     * Prompt user for SSH connection details
+     */
+    private static async promptForConnectionDetails(host: string, resourceName: string, ip: string): Promise<SSHConnectionInfo | undefined> {
+        
+        // Get username
+        const username = await vscode.window.showInputBox({
+            prompt: 'Enter SSH username',
+            value: 'fsxadmin', // Default for FSx
+            placeHolder: 'e.g., fsxadmin'
+        });
+
+        if (!username) {
+            return undefined;
+        }
+
+        const connectionOptions = await vscode.window.showQuickPick([
+            { label: 'Direct', value: 'direct' },
+            { label: 'EC2 Instance Connect', value: 'tunneling' },
+        ], {
+            placeHolder: 'How do you want to connect?'
+        });
+
+        if (!connectionOptions) {
+            return undefined;
+        }
+
+
+        let endpointId: string | undefined;
+        if (connectionOptions.value === 'tunneling') {
+            endpointId = await vscode.window.showInputBox({
+                prompt: 'Enter instance connect endpoint ID',
+                placeHolder: 'e.g., i-0123456789abcdef0'
+            });
+
+        }
+        // For 'default', keyPath remains undefined (will use SSH agent)
+
+        return {
+            ip: ip,
+            host: host,
+            username: username,
+            endpointId: endpointId,
+            connectionName: `${resourceName} (ip: ${ip})`
+        };
+    }
+
+    /**
+     * Establish SSH connection
+     */
+    private static async establishSSHConnection(connectionInfo: SSHConnectionInfo): Promise<void> {
+        // Method 1: Open integrated terminal with SSH command
+        await this.openSSHInTerminal(connectionInfo);
+    }
+
+    /**
+     * Open SSH connection in VS Code integrated terminal
+     */
+    private static async openSSHInTerminal(connectionInfo: SSHConnectionInfo): Promise<void> {
+        const terminal = vscode.window.createTerminal({
+            name: `SSH: ${connectionInfo.connectionName}`,
+            iconPath: new vscode.ThemeIcon('terminal')
+        });
+
+        // Build SSH command
+        let sshCommand = `ssh ${connectionInfo.username}@${connectionInfo.host}`;
+        
+       
+        
+        if (connectionInfo.endpointId) {
+            sshCommand += ` -o ProxyCommand='aws ec2-instance-connect open-tunnel --instance-connect-endpoint-id ${connectionInfo.endpointId} --private-ip-address ${connectionInfo.ip}'`;
+        }
+
+        // Add common SSH options
+        sshCommand += ' -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null';
+
+        terminal.show();
+        terminal.sendText(sshCommand);
+
+        vscode.window.showInformationMessage(`Opening SSH connection to ${connectionInfo.connectionName}`);
+    }
+
+}

@@ -1,0 +1,122 @@
+END USER LICENSE AGREEMENT
+1. IMPORTANT READ CAREFULLY: This End User License Agreement (“EULA”) is a legal agreement between You
+either as an individual or as an authorized representative of a business entity (hereafter referred to as “You” and/or
+“Your”), and NetApp, Inc. (“NetApp”). NetApp is willing to license to You the NetApp software product accompanying
+this EULA, which includes, without limitation, computer software features, authorized updates and upgrades or other
+supplements to the software, images, music, text and/or animations incorporated into the software, media, printed
+materials, or online or electronic documentation, provided by NetApp or made available for download (collectively
+referred to as the “Software”). Your download, installation and/or use of the Software constitutes acceptance of all
+of the terms stated herein. If You do not agree with all of these terms, You must promptly return the Software to
+NetApp or the authorized reseller from which You obtained the Software.
+2. License Grant. NetApp grants to You a personal, non-exclusive, non-transferrable, worldwide, limited and
+revocable license, without the right to sublicense, to a) install and use the Software for Your internal business
+purposes only, and b) use the Documentation in support of Your use of the Software, for a period of ninety (90) days
+from date upon which You download the Software ("Initial Term"). Upon expiration of the Initial Term, NetApp, at its
+sole discretion, may require the You to re-download the Software from support.netapp.com to renew the term of this
+EULA. At the end of the Initial Term, and in the absence of any license renewal, You are no longer permitted to use
+the Software or Documentation for any purpose.
+3. License Restrictions. You shall not, nor shall You allow any third party to: a) reverse-engineer, decompile or
+disassemble the Software or otherwise reduce it to human-readable format except to the extent required for
+interoperability purposes under applicable laws or as expressly permitted in open-source licenses; b) remove or
+conceal any product identification, proprietary, intellectual property or other notices in the Software or Documentation;
+c) use the Software or Documentation to perform services for third parties in a service bureau, managed services,
+commercial hosting services or similar environment; d) use the Software or Documentation to migrate data to any
+product other than a NetApp branded product; e) use the Software or Documentation to directly or indirectly manage
+data on any product other than a NetApp branded product, unless done in connection with the migration of such data
+to a NetApp branded product; f) assign or otherwise transfer, in whole or in part, this EULA to another party; g) use
+the Software with third party hardware or any second-hand or grey market NetApp hardware not purchased by You
+from NetApp or an authorized NetApp Partner; h) modify, adapt or create a derivative work of the Software or
+Documentation; and i) publish or provide to any third party any Software benchmark or comparison test results.
+4. Intellectual Property Rights. The Software and Documentation is licensed, not sold, to You. It is protected by
+intellectual property laws and treaties worldwide, and contains trade secrets, in which NetApp and its licensors
+reserve and retain all rights not expressly granted to You. No right, title or interest to any trademark, service mark,
+logo or trade name, of NetApp or its licensors is granted to You.
+5. Disclaimer of Warranty. THE SOFTWARE AND ACCOMPANYING DOCUMENTATION ARE PROVIDED "AS
+IS" WITHOUT ANY WARRANTY OF ANY KIND. ALL EXPRESS AND IMPLIED CONDITIONS,
+REPRESENTATIONS, AND WARRANTIES, INCLUDING, ANY IMPLIED WARRANTY OF MERCHANTABILITY,
+SATISFACTORY QUALITY, FITNESS FOR A PARTICULAR PURPOSE, ANY WARRANTY OF
+NONINFRINGEMENT, OR ANY WARRANTY THAT THE SOFTWARE IS ERROR-FREE ARE HEREBY
+DISCLAIMED, EXCEPT TO THE EXTENT THAT SUCH DISCLAIMERS ARE HELD TO BE LEGALLY INVALD.
+6. Limitation of Liability. THE TOTAL LIABILITY OF NETAPP, ITS LICENSORS, DISTRIBUTORS AND
+RESELLERS FOR ANY DAMAGE OR CLAIM ARISING FROM USE OF THE SOFTWARE OR THE
+ACCOMPANYING DOCUMENTATION SHALL NOT EXCEED THE AMOUNT ACTUALLY PAID BY YOU FOR THE
+SOFTWARE OR US$100.00, WHICHEVER IS GREATER. NETAPP AND ITS LICENSORS, DISTRIBUTORS AND
+RESELLERS ARE NOT LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, EXEMPLARY, SPECIAL, OR
+CONSEQUENTIAL DAMAGES; LOST OR CORRUPTED DATA, LOSS OF PROFITS, SAVINGS, OR REVENUES;
+PROCUREMENT OF SUBSTITUTE GOODS, INTERRUPTION OF BUSINESS, OR FOR ANY OCCURRENCE
+BEYOND THEIR CONTROL, RELATED TO THE USE OF OR INABILITY TO USE THE SOFTWARE, RELATED
+CONTENT THROUGH THE SOFTWARE, THE PROVISION OF OR FAILURE TO PROVIDE SUPPORT OR OTHER
+SERVICES, OR OTHERWISE IN CONNECTION WITH ANY PROVISION OF THIS EULA. IN NO EVENT SHALL
+NETAPP’S LICENSORS BE LIABLE FOR ANY DAMAGES OF ANY KIND INCLUDING DIRECT, INDIRECT,
+SPECIAL, INCIDENTAL OR CONSEQUENTIAL DAMAGES (WHICH SHALL INCLUDE WITHOUT LIMITATION,
+DAMAGES FOR LOSS OF BUSINESS OR PROFITS, BUSINESS INTERRUPTION, LOSS OF BUSINESS
+INFORMATION, OR OTHER PECUNIARY LOSS) WHETHER BASED ON CONTRACT, TORT OR OTHER LEGAL
+THEORY, ARISING OUT OF THE USE OF OR INABILITY TO USE THE SOFTWARE, EVEN IF ADVISED OF THE
+POSSIBILITY OF SUCH DAMAGES.
+7. Audit. You agree to give NetApp or its licensors and its independent accountants the right to examine Your books,
+records, systems and usage associated with the Software during regular business hours upon reasonable notice to
+verify compliance with this EULA. If such audit discloses non-compliance with this EULA, You shall promptly cure
+such non-compliance, plus promptly pay the reasonable costs of conducting such audit.
+8. Termination. This EULA is effective until terminated. NetApp may terminate this EULA immediately and without
+notice if You fail to comply with any term of this EULA. Termination of this EULA shall not relieve You from Your
+obligations to immediately pay NetApp any sums owed hereunder or under any other agreement with NetApp. Upon
+termination, all rights to use the Software will cease, and You shall promptly destroy the original and all copies of the
+Software and any license enablement keys in Your possession or under Your control. Termination is not an exclusive
+remedy and all other remedies otherwise entitled by law shall remain. Sections 1, 3 through 13 shall survive
+termination of this EULA.
+9. Software Copyright Information And Notices. Software copyright information and other related details are
+included as part of notices in the Documentation or other documentation published by NetApp (e.g. NOTICES.TXT or
+NOTICES. PDF).
+10. Export Controls. You acknowledge that the Software and Documentation supplied by NetApp under this EULA is
+subject to export controls under the laws and regulations of the United States, the European Union and other
+countries as applicable, and the Software may include export controlled technologies, including without limitation
+encryption technology. You agree to comply with such laws and regulations and, in particular, represent and warrant
+that You: a) shall not, unless authorized by U.S. export licenses or other government authorizations, directly or
+indirectly export or re-export the Software and Documentation to or use the Software and Documentation in countries
+subject to U.S. embargoes or trade sanctions programs; b) are not a party, nor will You export or re-export to a party,
+identified on any government export exclusion lists, including but not limited to the U.S. Denied Persons, Entity, and
+Specially Designated Nationals Lists; and c) will not use the Software and Documentation for any purposes prohibited
+by U.S. law, including but without limitation, the development, design, manufacture or production of nuclear, missile,
+chemical biological weaponry or other weapons of mass destruction.
+You agree to provide NetApp end use and end user information upon NetApp's request. You shall obtain all required
+authorizations, permits, or licenses to export, re-export or import, as required. You agree to obligate, by contract or
+other similar assurances, the parties to whom You re-export or otherwise transfer the Software to comply with all
+obligations set forth in this Section 10.
+11. Data Privacy. You have sole responsibility for the personal information you choose to manage and/or store using
+the Software and agree to comply with all applicable data privacy laws. NetApp is only responsible for personal
+information it explicitly requests in order to provide services in support of the Software. In such cases, NetApp agrees
+to protect personal information from unauthorized access and use, and from accidental loss or destruction in
+accordance with applicable data privacy laws. To the extent you provide NetApp with personal information in
+connection with NetApp’s support of the Software, NetApp will handle such personal information in accordance with
+the NetApp Customer Data Processing Agreement available on NetApp’s “How To Buy” website
+(https://www.netapp.com/how-to-buy/), incorporated herein by reference.
+12. U.S. Federal Government End Users. This Section 12 applies to You only if You are a U.S. Federal
+Government end user. The Software and Documentation is "commercial" computer software and documentation and
+is licensed to You in accordance with the rights articulated in applicable U.S. government acquisition regulations (e.g.
+FAR, DFARs) pertaining to commercial computer software and documentation. You shall not be subject to applicable
+audit costs specified in Section 7. Any dispute between You and NetApp will be subject to resolution pursuant to the
+Contract Disputes Act of 1978. Nothing contained in this EULA is meant to derogate the rights of the U.S. Department
+of Justice as identified in 28 U.S.C. 516. All other provisions of this EULA remain in effect as written.
+13. Third Party Offerings. Third-party software components, including free, copyleft and open-source software
+components, if any, used in connection with the Software (“Third Party Offerings”) are licensed in under the licensing
+terms and conditions attributable to such Third Party Offering. The Software’s AI features are powered by models
+from Third Party Offering(s) that are accessed through Your account with such Third Party Offering provider
+("Customer Models") and whose use is subject to separate terms and conditions between You and such Third Party
+Offering provider. NetApp disclaims all liability arising from Your use of Third Party Offerings and Customer Models.
+NetApp's indemnification obligations do not apply to allegations arising from Your use of those Third Party Offerings
+or Customer Models in connection with the Software.
+14. General. This EULA will be construed pursuant to the laws of i) the State of California, United States, excluding
+its conflicts of law provisions, if You are located in the United States or in a country in which NetApp has no local
+sales subsidiary, or ii) the country in which You are located if NetApp has a local sales subsidiary in that country.
+NetApp reserves the right to control all aspects of any lawsuit or claim that arises from Your use of the Software or
+Documentation. If required by NetApp's agreement with a third party licensor, NetApp's licensor will be a direct and
+intended third party beneficiary of this EULA and may enforce it directly against You. NetApp does not waive any of
+its rights under this EULA by failing to or delaying the exercise of its rights or partially exercising its rights at any time.
+To the extent that any Section of this EULA, or part thereof, is determined to be invalid or unenforceable, the
+remainder of this EULA shall remain in full force and effect. This EULA may not be changed except by a written
+amendment executed by an authorized representative of each party. In the event of a dispute between the English
+and non-English version of the EULA (where translated for local requirements), the English version of this EULA shall
+govern, to the extent permitted by applicable laws. This EULA represents the entire agreement and understanding
+between NetApp and You with respect to the Software and Documentation. It supersedes any previous
+communications, representations or agreements between NetApp and You and prevails over any conflicting or
+additional terms in any quote, purchase order, acknowledgment, or similar communication between the parties.

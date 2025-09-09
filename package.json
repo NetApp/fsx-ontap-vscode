@@ -1,0 +1,200 @@
+{
+  "name": "netapp-fsx-ontap",
+  "displayName": "netapp-fsx-ontap",
+  "description": "",
+  "version": "1.0.0",
+  "engines": {
+    "vscode": "^1.102.0"
+  },
+  "categories": [
+    "Chat", "Other"
+  ],
+  "company": "NetApp",
+  "publisher": "NetApp",
+  "activationEvents": [],
+  "main": "./out/extension.js",
+  "contributes": {
+    "chatParticipants": [
+      {
+        "id": "netapp-fsx-ontap.helper",
+        "fullName": "FSx Ontap Helper",
+        "name": "fsx-ontap",
+        "isSticky": false,
+        "description": "A user of the NetApp FSx ONTAP extension"
+      }
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "netapp-fsx-ontap",
+          "title": "NetApp FSx ONTAP",
+          "icon": "resources/netapp.svg"
+        }
+      ]
+    },
+    "views": {
+      "netapp-fsx-ontap": [
+        {
+          "id": "netapp-fsx-ontap.tree",
+          "name": "NetApp FSx ONTAP",
+          "contextualTitle": "NetApp FSx ONTAP"
+        }
+      ]
+    },
+    "commands": [
+      {
+        "command": "netapp-fsx-ontap.refresh",
+        "title": "Refresh",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "netapp-fsx-ontap.aws-login",
+        "title": "AWS Login",
+        "icon": "$(key)",
+        "category": "NetApp FSx ONTAP"
+      },
+      {
+        "command": "netapp-fsx-ontap.regions-select",
+        "title": "Select Regions",
+        "icon": "$(globe)",
+        "category": "NetApp FSx ONTAP"
+      },
+      {
+        "command": "netapp-fsx-ontap.addSvm",
+        "title": "Add SVM",
+        "category": "NetApp FSx ONTAP",
+        "icon": "$(add)"
+      },
+      {
+        "command": "netapp-fsx-ontap.addVolume",
+        "title": "Add Volume",
+        "category": "NetApp FSx ONTAP",
+        "icon": "$(add)"
+      },
+      {
+        "command": "netapp-fsx-ontap.addSvm-terraform",
+        "title": "Add SVM (Terraform)",
+        "category": "NetApp FSx ONTAP"
+      },
+      {
+        "command": "netapp-fsx-ontap.addVolume-terraform",
+        "title": "Add Volume (Terraform)",
+        "category": "NetApp FSx ONTAP"
+      },
+      {
+        "command": "netapp-fsx-ontap.addSvm-cloudformation",
+        "title": "Add SVM (CloudFormation)",
+        "category": "NetApp FSx ONTAP"
+      },
+      {
+        "command": "netapp-fsx-ontap.addVolume-cloudformation",
+        "title": "Add Volume (CloudFormation)",
+        "category": "NetApp FSx ONTAP"
+      },
+      {
+        "command": "netapp-fsx-ontap.addSvm-cli",
+        "title": "Add SVM (CLI)",
+        "category": "NetApp FSx ONTAP"
+      },
+      {
+        "command": "netapp-fsx-ontap.addVolume-cli",
+        "title": "Add Volume (CLI)",
+        "category": "NetApp FSx ONTAP"
+      },
+      {
+        "command": "netapp-fsx-ontap.sshToFileSystem",
+        "title": "SSH to File System",
+        "icon": "$(terminal)"
+      }
+    ],
+    "menus": {
+      "view/title": [
+        {
+          "command": "netapp-fsx-ontap.aws-login",
+           "group": "navigation"
+        },
+        {
+          "command": "netapp-fsx-ontap.regions-select",
+          "group": "navigation"
+        },
+        {
+          "command": "netapp-fsx-ontap.refresh",
+          "group": "navigation"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "netapp-fsx-ontap.addSvm-terraform",
+          "when": "viewItem == filesystem",
+          "group": "navigation"
+        },
+        {
+          "command": "netapp-fsx-ontap.addVolume-terraform",
+          "when": "viewItem == svm",
+          "group": "navigation"
+        },
+        {
+          "command": "netapp-fsx-ontap.addSvm-cloudformation",
+          "when": "viewItem == filesystem",
+          "group": "navigation"
+        },
+        {
+          "command": "netapp-fsx-ontap.addVolume-cloudformation",
+          "when": "viewItem == svm",
+          "group": "navigation"
+        },
+        {
+          "command": "netapp-fsx-ontap.addSvm-cli",
+          "when": "viewItem == filesystem",
+          "group": "navigation"
+        },
+        {
+          "command": "netapp-fsx-ontap.addVolume-cli",
+          "when": "viewItem == svm",
+          "group": "navigation"
+        },
+        {
+          "command": "netapp-fsx-ontap.sshToFileSystem",
+          "when": "viewItem == filesystem",
+          "group": "inline"
+        },
+        {
+          "command": "netapp-fsx-ontap.addSvm",
+          "when": "viewItem == filesystem",
+          "group": "inline"
+        },
+        {
+          "command": "netapp-fsx-ontap.addVolume",
+          "when": "viewItem == svm",
+          "group": "inline"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "pretest": "npm run compile && npm run lint",
+    "lint": "eslint src",
+    "test": "vscode-test"
+  },
+  "devDependencies": {
+    "@types/mocha": "^10.0.10",
+    "@types/node": "20.x",
+    "@types/vscode": "^1.102.0",
+    "@typescript-eslint/eslint-plugin": "^8.31.1",
+    "@typescript-eslint/parser": "^8.31.1",
+    "@vscode/test-cli": "^0.0.11",
+    "@vscode/test-electron": "^2.5.2",
+    "eslint": "^9.25.1",
+    "typescript": "^5.8.3"
+  },
+  "dependencies": {
+    "@aws-sdk/client-cloudwatch": "^3.864.0",
+    "@aws-sdk/client-fsx": "^3.859.0",
+    "@aws-sdk/client-sts": "^3.859.0",
+    "@smithy/shared-ini-file-loader": "^4.0.4",
+    "lodash": "^4.17.21"
+  }
+}
