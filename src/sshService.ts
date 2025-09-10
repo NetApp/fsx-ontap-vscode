@@ -11,62 +11,6 @@ export interface SSHConnectionInfo {
 
 export class SSHService {
     
-    static async sendCommandToTerminal(filesystem: any, command: string[]): Promise<string> {
-        // Get username
-        /*const username = await vscode.window.showInputBox({
-            prompt: 'Enter SSH username',
-            value: 'fsxadmin', // Default for FSx
-            placeHolder: 'e.g., fsxadmin'
-        });
-
-        // Get username
-        const password = await vscode.window.showInputBox({
-            prompt: 'Enter SSH password',
-            value: '', // Default for FSx
-            password: true
-        });
-
-        const connectionOptions = await vscode.window.showQuickPick([
-            { label: 'Direct', value: 'direct' },
-            { label: 'EC2 Instance Connect', value: 'tunneling' },
-        ], {
-            placeHolder: 'How do you want to connect?'
-        });
-
-        let endpointId: string | undefined;
-        if (connectionOptions?.value === 'tunneling') {
-            endpointId = await vscode.window.showInputBox({
-                prompt: 'Enter instance connect endpoint ID',
-                placeHolder: 'e.g., i-0123456789abcdef0'
-            });
-
-        }*/
-
-        const myTerm = vscode.window.createTerminal({
-            name: `SSH: ontap`,
-            iconPath: new vscode.ThemeIcon('terminal')
-        });
-
-        myTerm.show();
-        vscode.window.onDidChangeTerminalShellIntegration(async ({ terminal, shellIntegration }) => {
-            if (terminal === myTerm) {
-                const sshCommand = `ssh fsxadmin@management.fs-00018e6a0992b555a.fsx.us-east-1.amazonaws.com -o ProxyCommand='aws ec2-instance-connect open-tunnel --instance-connect-endpoint-id eice-009518b0a3ab6ac67 --private-ip-address 172.31.5.14' -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null`;
-                const e = shellIntegration.executeCommand(sshCommand);
-                vscode.window.onDidEndTerminalShellExecution(async event => {
-		           const sshLoginRes = [];
-                    for await (const data of e.read()) {
-                        sshLoginRes.push(data);
-                    }
-                    sshLoginRes.find(line => line.includes('Password:'));
-                    shellIntegration.executeCommand('Netapp234');
-		        });
-                
-                
-            }
-        });
-
-        return 'a';
-    }
 
     static async sshToFileSystem(fileSystemId: string, fileSystemName: string, region: string, ip: string): Promise<void> {
         try {
