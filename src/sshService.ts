@@ -69,7 +69,7 @@ export class SSHService {
         if (connectionOptions.value === 'tunneling') {
             endpointId = await vscode.window.showInputBox({
                 prompt: 'Enter instance connect endpoint ID',
-                placeHolder: 'e.g., i-0123456789abcdef0'
+                placeHolder: 'e.g., eice-009518b0a3ab6ac67'
             });
 
         }
