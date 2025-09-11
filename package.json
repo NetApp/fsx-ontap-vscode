@@ -1,6 +1,9 @@
 {
   "name": "netapp-fsx-ontap",
-  "repository": { "type": "git", "url": "https://github.com/NetApp/fsx-ontap-vscode.git" },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/NetApp/fsx-ontap-vscode.git"
+  },
   "displayName": "netapp-fsx-ontap",
   "description": "",
   "version": "1.0.0",
@@ -8,7 +11,8 @@
     "vscode": "^1.102.0"
   },
   "categories": [
-    "Chat", "Other"
+    "Chat",
+    "Other"
   ],
   "company": "NetApp",
   "publisher": "NetApp",
@@ -18,10 +22,16 @@
     "chatParticipants": [
       {
         "id": "netapp-fsx-ontap.helper",
-        "fullName": "FSx Ontap Helper",
+        "fullName": "FSx ONTAP Helper",
         "name": "fsx-ontap",
         "isSticky": false,
-        "description": "A user of the NetApp FSx ONTAP extension"
+        "description": "A user of the NetApp FSx ONTAP extension",
+        "commands": [
+          {
+            "name": "filesystem",
+            "description": "Test"
+          }
+        ]
       }
     ],
     "viewsContainers": {
@@ -112,7 +122,7 @@
       "view/title": [
         {
           "command": "netapp-fsx-ontap.aws-login",
-           "group": "navigation"
+          "group": "navigation"
         },
         {
           "command": "netapp-fsx-ontap.regions-select",
@@ -183,6 +193,7 @@
   "devDependencies": {
     "@types/mocha": "^10.0.10",
     "@types/node": "20.x",
+    "@types/ssh2": "^1.15.5",
     "@types/vscode": "^1.102.0",
     "@typescript-eslint/eslint-plugin": "^8.31.1",
     "@typescript-eslint/parser": "^8.31.1",
@@ -196,6 +207,7 @@
     "@aws-sdk/client-fsx": "^3.859.0",
     "@aws-sdk/client-sts": "^3.859.0",
     "@smithy/shared-ini-file-loader": "^4.0.4",
-    "lodash": "^4.17.21"
+    "lodash": "^4.17.21",
+    "ssh2": "^1.17.0"
   }
 }
