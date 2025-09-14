@@ -38,15 +38,15 @@ export class WelcomeEditor {
                     break;
                 case 'openMSsql':
                     console.log('Opening MS SQL documentation');
-                    welcomeEditor._openDocumentation('https://docs.aws.amazon.com/fsx/latest/ONTAPGuide/sql-server.html');
+                    welcomeEditor._openDocumentation('https://github.com/NetApp/FSx-ONTAP-samples-scripts/tree/main/Terraform/deploy-fsx-ontap-sqlserver');
                     break;
                 case 'openEKS':
                     console.log('Opening EKS documentation');
-                    welcomeEditor._openDocumentation('https://docs.aws.amazon.com/fsx/latest/ONTAPGuide/eks-csi-driver.html');
+                    welcomeEditor._openDocumentation('https://github.com/NetApp/FSx-ONTAP-samples-scripts/tree/main/EKS/FSxN-as-PVC-for-EKS');
                     break;
                 case 'openFSx':
                     console.log('Opening FSx documentation');
-                    welcomeEditor._openDocumentation('https://docs.aws.amazon.com/fsx/latest/ONTAPGuide/');
+                    welcomeEditor._openDocumentation('https://www.netapp.com/aws/fsx-ontap/');
                     break;
                 default:
                     console.log('Unknown message type:', data.type);
