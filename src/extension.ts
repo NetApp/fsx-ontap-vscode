@@ -6,6 +6,7 @@ import { state } from './state';
 import { FileSystemsTree } from './FileSystemsTree';
 import { SimpleScriptCreator } from './SimpleScriptCreator';
 import { handleChatRequest } from './copilot_herlper';
+import { WelcomeEditor } from './WelcomeEditor';
 
 // This method is called when your extension is activated
 // Your extension is activated the very first time the command is executed
@@ -15,6 +16,14 @@ export async function activate(context: vscode.ExtensionContext) {
 	// This line of code will only be executed once when your extension is activated
 	console.log('Congratulations, your extension "netapp-fsx-ontap" is now active!');
 	await state.init();
+
+	// Show welcome screen on first activation
+	//WelcomeEditor.createWelcomePanel(context);
+	const hasShownWelcome = context.globalState.get('hasShownWelcome', false);
+	if (!hasShownWelcome) {
+		WelcomeEditor.createWelcomePanel(context);
+		context.globalState.update('hasShownWelcome', true);
+	}
 
 	const treeDataProvider = new FileSystemsTree();
 	vscode.window.createTreeView('netapp-fsx-ontap.tree', {
@@ -32,6 +41,14 @@ export async function activate(context: vscode.ExtensionContext) {
 
 	const loginCommand = vscode.commands.registerCommand('netapp-fsx-ontap.aws-login', () => {
 		selectProfile();
+	});
+
+	const showFilesystemsCfCreationCommand = vscode.commands.registerCommand('netapp-fsx-ontap.show-filesystem-cf-creation', async () => {
+		await SimpleScriptCreator.createFileSystemCloudFormationScript();
+	});
+
+	const showFilesystemsTFCreationCommand = vscode.commands.registerCommand('netapp-fsx-ontap.show-filesystem-tf-creation', async () => {
+		await SimpleScriptCreator.createFileSystemTFScript();
 	});
 
 	const createSvmCommand = vscode.commands.registerCommand('netapp-fsx-ontap.addSvm', async (fileSystem: any) => {
@@ -70,6 +87,10 @@ export async function activate(context: vscode.ExtensionContext) {
 		await SimpleScriptCreator.createVolumeCliScript(svm.id, svm.region);
 	});
 
+	const showWelcomeCommand = vscode.commands.registerCommand('netapp-fsx-ontap.showWelcome', () => {
+		WelcomeEditor.createWelcomePanel(context);
+	});
+
 	const chatParticipant = vscode.chat.createChatParticipant('netapp-fsx-ontap.helper', handleChatRequest);
 	chatParticipant.iconPath = vscode.Uri.file(context.asAbsolutePath('resources/chat.svg'));
 
@@ -77,6 +98,8 @@ export async function activate(context: vscode.ExtensionContext) {
 		refreshCommand,
 		regionCommand,
 		loginCommand,
+		showFilesystemsCfCreationCommand,
+		showFilesystemsTFCreationCommand,
 		createSvmCommand,
 		showSvmTerraformCommand,
 		showSvmCloudFormationCommand,
@@ -86,11 +109,12 @@ export async function activate(context: vscode.ExtensionContext) {
 		showVolumeTerraformCommand,
 		showVolumeCloudFormationCommand,
 		showVolumeCliCommand,
+		showWelcomeCommand,
 		chatParticipant
 	);
 
-	
+
 }
 
 // This method is called when your extension is deactivated
-export function deactivate() {}
+export function deactivate() { }

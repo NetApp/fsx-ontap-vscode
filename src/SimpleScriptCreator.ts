@@ -1,10 +1,6 @@
 import * as vscode from 'vscode';
-
-/**
- * Simple example of creating scripts without saving to disk
- * This is the easiest approach to implement
- */
-
+import * as fs from 'fs';
+import path from 'path';
 export class SimpleScriptCreator {
     
   public static async createVolumeTerraformScript(svmId: string, region: string): Promise<void> {
@@ -87,6 +83,16 @@ export class SimpleScriptCreator {
                               }`;
 
         await SimpleScriptCreator.showScript(content, 'terraform', 'Terraform');
+  }
+
+  public static async createFileSystemCloudFormationScript(): Promise<void> {
+    const content = fs.readFileSync(path.resolve(__dirname, '../resources/filesystem.yaml'), 'utf-8');
+    await SimpleScriptCreator.showScript(content, 'yaml', 'CloudFormation');
+  }
+
+  public static async createFileSystemTFScript(): Promise<void> {
+    const content = fs.readFileSync(path.resolve(__dirname, '../resources/filesystem.tf'), 'utf-8');
+    await SimpleScriptCreator.showScript(content, 'terraform', 'Terraform');
   }
 
   public static async createVolumeCloudFormationScript(svmId: string, region: string): Promise<void> {

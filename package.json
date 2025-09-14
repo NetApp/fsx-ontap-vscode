@@ -16,7 +16,9 @@
   ],
   "company": "NetApp",
   "publisher": "NetApp",
-  "activationEvents": [],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
   "main": "./out/extension.js",
   "contributes": {
     "chatParticipants": [
@@ -63,6 +65,14 @@
         "title": "AWS Login",
         "icon": "$(key)",
         "category": "NetApp FSx ONTAP"
+      },
+      {
+        "command": "netapp-fsx-ontap.show-filesystem-cf-creation",
+        "title": "Show FileSystem CloudFormation Creation"
+      },
+      {
+        "command": "netapp-fsx-ontap.show-filesystem-tf-creation",
+        "title": "Show FileSystem Terraform Creation"
       },
       {
         "command": "netapp-fsx-ontap.regions-select",
@@ -116,10 +126,21 @@
         "command": "netapp-fsx-ontap.sshToFileSystem",
         "title": "SSH to File System",
         "icon": "$(terminal)"
+      },
+      {
+        "command": "netapp-fsx-ontap.showWelcome",
+        "title": "Show Welcome",
+        "category": "NetApp FSx ONTAP",
+        "icon": "$(home)"
       }
     ],
     "menus": {
       "view/title": [
+        {
+          "command": "netapp-fsx-ontap.showWelcome",
+          "group": "navigation",
+          "when": "view == netapp-fsx-ontap.tree"
+        },
         {
           "command": "netapp-fsx-ontap.aws-login",
           "group": "navigation"
