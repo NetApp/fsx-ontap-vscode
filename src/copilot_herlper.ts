@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { FileSystemMetrics, getEntities, VolumeMetrics } from './FileSystemApis';
-import { executeOntapCommands } from './ontap_executor';
+import { executeOntapCommands, OntapExecutorResult } from './ontap_executor';
 import { json } from 'stream/consumers';
 
 
@@ -52,7 +52,13 @@ export async function handleChatRequest(
             stream.markdown(`\nI will now proceed to run the necessary ONTAP CLI commands.\n`);
             stream.markdown(`\nI will need some information to establish the SSH connection.\n`);
             const fileSystem = entitiesResults.filesystems.find((fs: any) => fs.FileSystemId === fileSystemId);
-            const results = await executeOntapCommands(fileSystem, commands.map((c: { command: string; }) => c.command), undefined, stream);
+            let results: OntapExecutorResult = undefined as any;
+            try {
+                results = await executeOntapCommands(fileSystem, commands.map((c: { command: string; }) => c.command), undefined, stream);
+            } catch (error) {
+                stream.markdown(`\nFailed to SSH into ${fileSystemId}\n`);
+                return;
+            }
             const errors = results.result.find(r => !r.success && r.exitCode === 255);
             const validResults = results.result.filter(r => r.success);
             if(errors) {
@@ -95,7 +101,7 @@ export async function handleChatRequest(
         } else {
             
             stream.progress('processing request...');
-            const entitiesMessage = vscode.LanguageModelChatMessage.User('from the user prompt please return as a json string array without the ```json``` that i can parse which of the below entities are asked from the user, can be one or more : filesystems, volumes, svms, backups'
+            const entitiesMessage = vscode.LanguageModelChatMessage.Assistant('You are an AWS FSX ONTAP expert. From the user prompt please return as a json string array without the ```json``` that I can parse which of the below entities are asked from the user, can be one or more : filesystems, volumes, svms, backups'
                  + " if you see that there is a need for filesystems and volumes and also svms" + "\n" + request.prompt);
             const entitiesRequest = await chatModels[0].sendRequest([entitiesMessage], {}, token);
 
@@ -107,21 +113,30 @@ export async function handleChatRequest(
             const fsMetrics: string[] = [];
             const volumeMetrics: string[] = [];
             if(entities.length > 0) {
-                const fsMetricsMessage = vscode.LanguageModelChatMessage.User('from the user prompt please return as a json string array without the ```json``` that i can parse which of the below filesystem metrics are asked from the user, can be one or more : ' + FileSystemMetrics.join(', ') + " use this url for more information https://docs.aws.amazon.com/fsx/latest/ONTAPGuide/file-system-metrics.html" + "\n" + request.prompt);
+                const fsMetricsMessage = vscode.LanguageModelChatMessage.Assistant('You are an AWS FSX ONTAP expert. From the user prompt advise if there is a need to query cloudwatch metrics for the filesystems. If so return as a json string array without the ```json``` that I can parse which of the below filesystem metrics are asked from the user, can be one or more : ' + FileSystemMetrics.join(', ') + " use this url for more information https://docs.aws.amazon.com/fsx/latest/ONTAPGuide/file-system-metrics.html" + "\n" + request.prompt);
                 const fsMetricsRequest = await chatModels[0].sendRequest([fsMetricsMessage], {}, token);
                 let fsmet = '';
                 for await (const fragment of fsMetricsRequest.text) {
                             fsmet = fsmet + fragment;
                 }
-                fsMetrics.push(...JSON.parse(fsmet).filter((met: string) => FileSystemMetrics.includes(met)));
+                try {
+                    fsMetrics.push(...JSON.parse(fsmet).filter((met: string) => FileSystemMetrics.includes(met)));
+                } catch (error) {
+                    console.error('Error parsing filesystem metrics:', error);
+                }
+                
 
-                const volumeMetricsMessage = vscode.LanguageModelChatMessage.User('from the user prompt please return as a json string array without the ```json``` that i can parse which of the below volume metrics are asked from the user, can be one or more : ' + VolumeMetrics.join(', ') + "use this url for more information https://docs.aws.amazon.com/fsx/latest/ONTAPGuide/volume-metrics.html" + "\n" + request.prompt);
+                const volumeMetricsMessage = vscode.LanguageModelChatMessage.Assistant('You are an AWS FSX ONTAP expert. From the user prompt From the user prompt advise if there is a need to query cloudwatch metrics for the filesystems. If so return as a json string array without the ```json``` that I can parse which of the below volume metrics are asked from the user, can be one or more : ' + VolumeMetrics.join(', ') + " use this url for more information https://docs.aws.amazon.com/fsx/latest/ONTAPGuide/volume-metrics.html" + "\n" + request.prompt);
                 const volumeMetricsRequest = await chatModels[0].sendRequest([volumeMetricsMessage], {}, token);
                 let vmet = '';
                 for await (const fragment of volumeMetricsRequest.text) {
                             vmet = vmet + fragment;
                 }
-                volumeMetrics.push(...JSON.parse(vmet).filter((met: string) => VolumeMetrics.includes(met)));
+                try {
+                    volumeMetrics.push(...JSON.parse(vmet).filter((met: string) => VolumeMetrics.includes(met)));
+                } catch (error) {
+                    console.error('Error parsing volume metrics:', error);
+                }
             }
 
             stream.markdown(`\nI understand that I need the following entities: ${entities.join(', ')}\n`);

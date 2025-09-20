@@ -129,8 +129,8 @@ async function createTunnelAndConnect(config: { instanceConnectEndpointId: strin
     return await executeONTAPCommands(sshClient, commands, stream);
     
   } catch (error) {
-    vscode.window.showErrorMessage(`Error: ${(error as Error).message}`);
-    return [];
+    //vscode.window.showErrorMessage(`Error: ${(error as Error).message}`);
+    throw new Error('failed to ssh');
   } finally {
     // Cleanup
     if (sshClient) {
