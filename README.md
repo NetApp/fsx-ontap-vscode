@@ -25,6 +25,11 @@ Simply click on the terminal icon next to each file systems in the navigation ba
 ### FSx for ONTAP chatbot participant
 Using @fsx-ontap in Github co-pilot will invoke the NetApp chat participant, where you can ask
 questions about your FSx for ONTAP resources and get a NetApp ONTAP expert advice.
+![chatbot](./resources//chatbot.gif)
+
+If you provide a /filesystem argument the chatbot will leverage ONTAP commands to obtain the required information.
+This allows you query things that aren't available via the AWS console. For example FlexClone information.
+![clones](./resources/chatbotClones.gif)
 
 Please note: NetApp Chat participant AI analysis and responses should be verified and considered for your specific requirements before implementing any recommendations. 
 
