@@ -204,12 +204,16 @@
     }
   },
   "scripts": {
-    "vscode:prepublish": "npm run compile",
+    "vscode:prepublish": "npm run build:production",
     "compile": "tsc -p ./",
+    "build:production": "npm run compile && node scripts/build-with-secrets.js",
+    "build:dev": "npm run compile",
     "watch": "tsc -watch -p ./",
     "pretest": "npm run compile && npm run lint",
     "lint": "eslint src",
-    "test": "vscode-test"
+    "test": "vscode-test",
+    "package": "npm run build:production && npx vsce package",
+    "publish": "npm run build:production && npx vsce publish"
   },
   "devDependencies": {
     "@types/mocha": "^10.0.10",
@@ -228,6 +232,7 @@
     "@aws-sdk/client-fsx": "^3.859.0",
     "@aws-sdk/client-sts": "^3.859.0",
     "@smithy/shared-ini-file-loader": "^4.0.4",
+    "@vscode/extension-telemetry": "^1.0.0",
     "lodash": "^4.17.21",
     "ssh2": "^1.17.0"
   }

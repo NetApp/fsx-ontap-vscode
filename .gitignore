@@ -137,3 +137,12 @@ dist
 # Vite logs files
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
+# Extension-specific secrets and configuration
+config.json
+secrets/
+*.key
+telemetry.json
+
+# Build artifacts with secrets
+out/telemetryKey.js
+dist/telemetryKey.js

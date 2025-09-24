@@ -1,6 +1,7 @@
 import { CreateStorageVirtualMachineCommand, CreateVolumeCommand, FileSystem, FSxClient, ListTagsForResourceCommand, paginateDescribeBackups, paginateDescribeFileSystems, paginateDescribeStorageVirtualMachines, paginateDescribeVolumes, StorageVirtualMachine, Volume } from "@aws-sdk/client-fsx";
 import {CloudWatchClient, GetMetricDataCommand, GetMetricStatisticsCommand, GetMetricStatisticsCommandInput, ListMetricsCommand} from "@aws-sdk/client-cloudwatch";
 import { state } from "./state";
+import { create_svm_failure, create_svm_success, create_volume_failure, create_volume_success } from "./telemetryReporter";
 
 export const FileSystemMetrics = ['NetworkThroughputUtilization', 'NetworkSentBytes', 'NetworkReceivedBytes', 'DataReadBytes', 'DataWriteBytes',
                             'DataReadOperations', 'DataWriteOperations', 'MetadataOperations', 'DataReadOperationTime', 'DataWriteOperationTime',
@@ -142,7 +143,15 @@ export async function addSvm(fileSystemId: string, name: string, region: string)
         FileSystemId: fileSystemId,
         Name: name
     });
-    await client.send(command);
+    try {
+        const res = await client.send(command);
+        state.reporter.sendTelemetryEvent(create_svm_success, { region, fileSystemId });
+        return res;
+    } catch (error) {
+        console.error("Error creating SVM:", error);
+        state.reporter.sendTelemetryEvent(create_svm_failure, { region, fileSystemId, error: (error as Error).message });
+        throw error;
+    }
 }
 
 export async function addVolume(svmId: string, name: string, sizeInMB: number, region: string) {
@@ -163,9 +172,11 @@ export async function addVolume(svmId: string, name: string, sizeInMB: number, r
     });
     try {
         const res = await client.send(command);
+        state.reporter.sendTelemetryEvent(create_volume_success, { region, svmId, sizeInMB: sizeInMB.toString() });
         return res;
     } catch (error) {
         console.error("Error creating volume:", error);
+        state.reporter.sendTelemetryEvent(create_volume_failure, { region, svmId, sizeInMB: sizeInMB.toString(), error: (error as Error).message });
         throw error;
     }
 }
@@ -178,7 +189,7 @@ export async function getEntities(entities: string[], extraData?: {fsMetrics: st
         backups: [],
         metrics: {},
     };
-    const regions = state.selectedRegions;
+    const regions = state.getSelectedRegions();
     for (const entity of entities) {
         for (const region of regions) {
             switch (entity.toLowerCase()) {

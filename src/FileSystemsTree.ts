@@ -42,7 +42,7 @@ export class FileSystemsTree implements vscode.TreeDataProvider<vscode.TreeItem>
                 return [item];
             } else {
                 
-                return state.selectedRegions.map(region => {
+                return state.getSelectedRegions().map(region => {
                     const item = new vscode.TreeItem(`${state.availableRegions[region].description} - ${region}`, vscode.TreeItemCollapsibleState.Collapsed);
                     item.contextValue = 'region';
                     item.id = region;

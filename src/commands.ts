@@ -3,6 +3,7 @@ import { state } from './state';
 import { stat } from 'fs';
 import { addSvm, addVolume } from './FileSystemApis';
 import { SSHService } from './sshService';
+import { ssh_to_fs } from './telemetryReporter';
 
 export async function selectRegion() {
      const window = vscode.window;
@@ -12,7 +13,7 @@ export async function selectRegion() {
          items.push({
              detail: key,
              label: (typeof value === 'object' && value !== null && 'description' in value) ? (value as { description: string }).description : '',
-             picked: state.selectedRegions.includes(key),
+             picked: state.getSelectedRegions().includes(key),
          });
      }
      const result = await window.showQuickPick(items, {
@@ -23,8 +24,7 @@ export async function selectRegion() {
 
      if (result) {
          const selectedRegions = result.map(item => item.detail || '');
-         state.selectedRegions = selectedRegions;
-         state.onDidChangeRegions.fire();
+         state.setSelectedRegions(selectedRegions);
      }
 }
 
@@ -67,6 +67,7 @@ export async function addSvmCommand(fileSystem: any, region: string, refreshFunc
 
 
 export async function sshToFileSystem(item: any) {
+    state.reporter.sendTelemetryEvent(ssh_to_fs, { region: item.region, fsId: item.id });
     await SSHService.sshToFileSystem(item.id, item.name, item.region, item.fs.OntapConfiguration.Endpoints.Management.IpAddresses[0]);
     
 }

@@ -4,6 +4,7 @@ import * as vscode from 'vscode';
 import * as fs from 'fs';
 import { keys } from 'lodash';
 import path from 'path';
+import { FsxTelemetryReporter } from './telemetryReporter';
 
 export type Profile = {
     profileName: string;
@@ -18,19 +19,46 @@ class State {
     readonly onDidChangeRegions = new vscode.EventEmitter<void>();
     readonly onDidChangeRegionsEvent = this.onDidChangeRegions.event;
 
-    selectedRegions: string[] = ['us-east-1', 'us-west-2', 'us-east-2', 'eu-central-1', 'eu-west-1'];
+    private selectedRegions: string[] = [];
+    private context: vscode.ExtensionContext = {} as vscode.ExtensionContext;
     availableRegions: { [key: string]: { description: string } } = {};
     profiles: Profile[] = [];
     currentProfile: string = '';
+    userId: string = '';
+    sessionId: string = crypto.randomUUID();
+    reporter = new FsxTelemetryReporter();
 
     constructor() {
         this.onDidChangeActiveProfileEvent((profile => {
             console.log('Active profile changed to:', profile);
         }));
     }
-    async init() {
+
+    async init(context: vscode.ExtensionContext) {
+        this.context = context;
         this.loadRegions();
         await this.loadProfiles();
+
+        this.selectedRegions = context.globalState.get<string[]>('fsx-ontap-regions', ['us-east-1', 'us-west-2', 'us-east-2', 'eu-central-1', 'eu-west-1']);
+        let user = context.globalState.get('fsx-ontap-user-id', '');
+        if (user) {
+            this.userId = user;
+        } else {
+            this.userId = crypto.randomUUID();
+            context.globalState.update('fsx-ontap-user-id', this.userId);
+        }
+
+        this.reporter.activate(context);
+    }
+
+    getSelectedRegions() {
+        return this.selectedRegions;
+    }
+
+    setSelectedRegions(regions: string[]) {
+        this.selectedRegions = regions;
+        this.context.globalState.update('fsx-ontap-regions', regions);
+        this.onDidChangeRegions.fire();
     }
 
     async loadProfiles() {
