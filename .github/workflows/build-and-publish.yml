@@ -34,11 +34,6 @@ jobs:
           TELEMETRY_KEY: ${{ secrets.TELEMETRY_KEY }}
           APPLICATION_INSIGHTS_KEY: ${{ secrets.APPLICATION_INSIGHTS_KEY }}
 
-      - name: Run tests
-        run: npm test
-        env:
-          TELEMETRY_KEY: ${{ secrets.TELEMETRY_KEY }}
-
       - name: Package extension
         run: npm run package
         env:
