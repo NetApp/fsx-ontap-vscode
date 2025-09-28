@@ -115,7 +115,7 @@ export async function handleChatRequest(
             const fsMetrics: string[] = [];
             const volumeMetrics: string[] = [];
             if(entities.length > 0) {
-                const fsMetricsMessage = vscode.LanguageModelChatMessage.Assistant('You are an AWS FSX ONTAP expert. From the user prompt advise if there is a need to query cloudwatch metrics for the filesystems. If so return as a json string array without the ```json``` that I can parse which of the below filesystem metrics are asked from the user, can be one or more : ' + FileSystemMetrics.join(', ') + " use this url for more information https://docs.aws.amazon.com/fsx/latest/ONTAPGuide/file-system-metrics.html" + "\n" + request.prompt);
+                const fsMetricsMessage = vscode.LanguageModelChatMessage.Assistant('You are an AWS FSX ONTAP expert. From the user prompt advise if there is a need to query cloudwatch metrics for the filesystems. If so return it only as as a json string array without the ```json``` that I can parse which of the below filesystem metrics are asked from the user, can be one or more : ' + FileSystemMetrics.join(', ') + " use this url for more information https://docs.aws.amazon.com/fsx/latest/ONTAPGuide/file-system-metrics.html" + "\n" + request.prompt);
                 const fsMetricsRequest = await chatModels[0].sendRequest([fsMetricsMessage], {}, token);
                 let fsmet = '';
                 for await (const fragment of fsMetricsRequest.text) {
@@ -128,7 +128,7 @@ export async function handleChatRequest(
                 }
                 
 
-                const volumeMetricsMessage = vscode.LanguageModelChatMessage.Assistant('You are an AWS FSX ONTAP expert. From the user prompt From the user prompt advise if there is a need to query cloudwatch metrics for the filesystems. If so return as a json string array without the ```json``` that I can parse which of the below volume metrics are asked from the user, can be one or more : ' + VolumeMetrics.join(', ') + " use this url for more information https://docs.aws.amazon.com/fsx/latest/ONTAPGuide/volume-metrics.html" + "\n" + request.prompt);
+                const volumeMetricsMessage = vscode.LanguageModelChatMessage.Assistant('You are an AWS FSX ONTAP expert. From the user prompt advise if there is a need to query cloudwatch metrics for the filesystem volumes. If so return response that contains it only as as a json string array without the ```json``` that I can parse which of the below volume metrics are asked from the user, can be one or more : ' + VolumeMetrics.join(', ') + " use this url for more information https://docs.aws.amazon.com/fsx/latest/ONTAPGuide/volume-metrics.html" + "\n" + request.prompt);
                 const volumeMetricsRequest = await chatModels[0].sendRequest([volumeMetricsMessage], {}, token);
                 let vmet = '';
                 for await (const fragment of volumeMetricsRequest.text) {
