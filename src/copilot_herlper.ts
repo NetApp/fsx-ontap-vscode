@@ -158,7 +158,16 @@ export async function handleChatRequest(
             const entitiesResults = await getEntities(entities, {fsMetrics, volMetrics: volumeMetrics});
             stream.markdown("I have got the context and processing...");
             stream.progress('finishing...');
-            const userResult = await chatModels[0].sendRequest([vscode.LanguageModelChatMessage.User(JSON.stringify(entitiesResults) + "\n" + request.prompt)], {}, token);
+            const messages: vscode.LanguageModelChatMessage[] = [];
+            messages.push(vscode.LanguageModelChatMessage.Assistant('You are an AWS FSX ONTAP expert. Use the context I give you to answer the question. If you dont see the information in the context say you dont know. Use this format for your answer: Question: <repeat the user question> Answer: <your answer>'));
+            messages.push(vscode.LanguageModelChatMessage.Assistant(`Here is the list of filesystem context that you can use to answer the question: ${JSON.stringify(entitiesResults.filesystems || [])}`));
+            messages.push(vscode.LanguageModelChatMessage.Assistant(`Here is the list of volumes context that you can use to answer the question: ${JSON.stringify(entitiesResults.volumes || [])}`));
+            messages.push(vscode.LanguageModelChatMessage.Assistant(`Here is the list of storage virtual machine context that you can use to answer the question: ${JSON.stringify(entitiesResults.svms || [])}`));
+            messages.push(vscode.LanguageModelChatMessage.Assistant(`Here is the cloud watch context that you can use to answer the question: ${JSON.stringify(entitiesResults.metrics || [])}`));
+            messages.push(vscode.LanguageModelChatMessage.Assistant(`Here is the list of backups context that you can use to answer the question: ${JSON.stringify(entitiesResults.backups || [])}`));
+            messages.push(vscode.LanguageModelChatMessage.User(request.prompt));
+
+            const userResult = await chatModels[0].sendRequest(messages, {}, token);
             for await (const fragment of userResult.text) {
                         stream.markdown(fragment);
             }
