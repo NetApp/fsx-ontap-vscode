@@ -146,26 +146,54 @@ export async function handleChatRequest(
             if(fsMetrics.length > 0) {
                 stream.markdown(`\nI will also gather the following filesystem metrics: ${fsMetrics.join(', ')}\n`);
             }
-            if(volumeMetrics.length > 0) {
-                stream.markdown(`\nI will also gather the following volume metrics: ${volumeMetrics.join(', ')}\n`);
-            }
+            //if(volumeMetrics.length > 0) {
+            //    stream.markdown(`\nI will also gather the following volume metrics: ${volumeMetrics.join(', ')}\n`);
+            //}
             stream.markdown(`\nI will now proceed to gather the necessary information for those entities.\n`);
             stream.progress('gathering information...');
 
             if(fsMetrics.length > 0 || volumeMetrics.length > 0) {
                 entities.push('metrics');
             }
-            const entitiesResults = await getEntities(entities, {fsMetrics, volMetrics: volumeMetrics});
+            const entitiesResults = await getEntities(entities, {fsMetrics, volMetrics: []});
             stream.markdown("I have got the context and processing...");
             stream.progress('finishing...');
             const messages: vscode.LanguageModelChatMessage[] = [];
-            messages.push(vscode.LanguageModelChatMessage.Assistant('You are an AWS FSX ONTAP expert. Use the context I give you to answer the question. If you dont see the information in the context say you dont know. Use this format for your answer: Question: <repeat the user question> Answer: <your answer>'));
-            messages.push(vscode.LanguageModelChatMessage.Assistant(`Here is the list of filesystem context that you can use to answer the question: ${JSON.stringify(entitiesResults.filesystems || [])}`));
-            messages.push(vscode.LanguageModelChatMessage.Assistant(`Here is the list of volumes context that you can use to answer the question: ${JSON.stringify(entitiesResults.volumes || [])}`));
-            messages.push(vscode.LanguageModelChatMessage.Assistant(`Here is the list of storage virtual machine context that you can use to answer the question: ${JSON.stringify(entitiesResults.svms || [])}`));
-            messages.push(vscode.LanguageModelChatMessage.Assistant(`Here is the cloud watch context that you can use to answer the question: ${JSON.stringify(entitiesResults.metrics || [])}`));
-            messages.push(vscode.LanguageModelChatMessage.Assistant(`Here is the list of backups context that you can use to answer the question: ${JSON.stringify(entitiesResults.backups || [])}`));
-            messages.push(vscode.LanguageModelChatMessage.User(request.prompt));
+            messages.push(vscode.LanguageModelChatMessage.Assistant(`You are an AWS FSX ONTAP expert. 
+                Use the context I give you to answer the question. 
+                The context is only about AWS FSX ONTAP.
+                The context is from the AWS account that the user is currently connected to in the VSCode AWS extension.
+                The context contains the current state of the AWS FSX ONTAP filesystems, volumes, svms, backups and cloud watch metrics. 
+                If the question is not about AWS FSX ONTAP, say you can only answer questions related to AWS FSX ONTAP.
+                Some quiestion may refere to more than one filesystem, volume or svm, make sure to answer all of them.
+                Some questions may refer to a single filesystem, volue or svm. make sure to use the correct one. you can identify the filesystem by its id or by its name tag.
+                Answer only questions related to AWS FSX ONTAP. 
+                Use this format for your answer: Question: <repeat the user question> Answer: <your answer>
+                The question is: ${request.prompt}
+                Here is the context of filesystem that you can use to answer the question.
+                The format is collection of filesystems. context: ${JSON.stringify(entitiesResults.filesystems || [])}
+                Here is the context of volumes that you can use to answer the question.
+                The format is collection of volumes. context: ${JSON.stringify(entitiesResults.volumes || [])}
+                Here is the context of storage virtual machines that you can use to answer the question.
+                The format is collection of storage virtual machines. context: ${JSON.stringify(entitiesResults.svms || [])}
+                Here is the cloud watch context that you can use to answer the question.
+                The format is map that the key is the region and the value is the cloudwatch metrics.
+                Each metric is represented as a key-value pair where the name is the entity name - and the metric. context: ${JSON.stringify(entitiesResults.metrics || {})}
+                Here is the context of backups that you can use to answer the question.
+                The format is collection of backups. context: ${JSON.stringify(entitiesResults.backups || [])}`));
+            /*messages.push(vscode.LanguageModelChatMessage.Assistant(`The user question is: ${request.prompt}`));
+            messages.push(vscode.LanguageModelChatMessage.Assistant(`Here is the context of filesystem that you can use to answer the question.
+                The format is collection of filesystems. context: ${JSON.stringify(entitiesResults.filesystems || [])}`));
+            messages.push(vscode.LanguageModelChatMessage.Assistant(`Here is the context of volumes that you can use to answer the question.
+                The format is collection of volumes. context: ${JSON.stringify(entitiesResults.volumes || [])}`));
+            messages.push(vscode.LanguageModelChatMessage.Assistant(`Here is the context of storage virtual machines that you can use to answer the question.
+                The format is collection of storage virtual machines. context: ${JSON.stringify(entitiesResults.svms || [])}`));
+            messages.push(vscode.LanguageModelChatMessage.Assistant(`Here is the cloud watch context that you can use to answer the question.
+                The format is map that the key is the region and the value is the cloudwatch metrics.
+                Each metric is represented as a key-value pair where the name is the entity name - and the metric. context: ${JSON.stringify(entitiesResults.metrics || [])}`));
+            messages.push(vscode.LanguageModelChatMessage.Assistant(`Here is the context of backups that you can use to answer the question.
+                The format is collection of backups. context: ${JSON.stringify(entitiesResults.backups || [])}`));*/
+           
 
             const userResult = await chatModels[0].sendRequest(messages, {}, token);
             for await (const fragment of userResult.text) {
