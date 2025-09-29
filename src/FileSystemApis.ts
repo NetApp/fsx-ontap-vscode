@@ -211,7 +211,7 @@ export async function getEntities(entities: string[], extraData?: {fsMetrics: st
                     break;
                 case "metrics":
                     const metrics = await getFileSystemMetrics(region, extraData?.fsMetrics || [], extraData?.volMetrics || []);
-                    results.metrics = metrics;
+                    results.metrics[region] = metrics;
             }
         }
     }
