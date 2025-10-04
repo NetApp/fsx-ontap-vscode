@@ -4,9 +4,9 @@
     "type": "git",
     "url": "https://github.com/NetApp/fsx-ontap-vscode.git"
   },
-  "displayName": "netapp-fsx-ontap",
+  "displayName": "NetApp FSx ONTAP",
   "description": "",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "engines": {
     "vscode": "^1.102.0"
   },
@@ -14,6 +14,15 @@
     "Chat",
     "Other"
   ],
+  "keywords": [
+    "netapp",
+    "ONTAP",
+    "fsx",
+    "aws",
+    "storage",
+    "automation"
+  ],
+  "icon": "resources/fsxn.png",
   "company": "NetApp",
   "publisher": "NetApp",
   "activationEvents": [
