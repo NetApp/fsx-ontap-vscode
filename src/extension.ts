@@ -25,6 +25,9 @@ export async function activate(context: vscode.ExtensionContext) {
 		context.globalState.update('hasShownWelcome', true);
 	}
 
+	/*vscode.workspace.onDidChangeConfiguration(async (e) => {
+		
+	});*/
 	const treeDataProvider = new FileSystemsTree();
 	vscode.window.createTreeView('netapp-fsx-ontap.tree', {
 		treeDataProvider: treeDataProvider

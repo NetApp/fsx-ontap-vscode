@@ -48,10 +48,12 @@ export class FsxTelemetryReporter {
             return;
         }
         
+        const company = vscode.workspace.getConfiguration('netapp-fsx-ontap').get('company',"");
         try {
             const baseProperties = {
                 userId: state.userId,
-                sessionId: state.sessionId
+                sessionId: state.sessionId,
+                company: company
             };
             properties = { ...baseProperties, ...properties };
             this.reporter.sendTelemetryEvent(eventName, properties, measurements);

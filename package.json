@@ -6,7 +6,7 @@
   },
   "displayName": "NetApp FSx ONTAP",
   "description": "",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "engines": {
     "vscode": "^1.102.0"
   },
@@ -30,6 +30,17 @@
   ],
   "main": "./out/extension.js",
   "contributes": {
+    "configuration": {
+      "type": "object",
+      "title": "NetApp FSx ONTAP",
+      "properties": {
+        "netapp-fsx-ontap.company": {
+          "type": "string",
+          "default": "",
+          "description": "Company name"
+        }
+      }
+    },
     "chatParticipants": [
       {
         "id": "netapp-fsx-ontap.helper",
