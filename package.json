@@ -163,15 +163,18 @@
         },
         {
           "command": "netapp-fsx-ontap.aws-login",
-          "group": "navigation"
+          "group": "navigation",
+          "when": "view == netapp-fsx-ontap.tree"
         },
         {
           "command": "netapp-fsx-ontap.regions-select",
-          "group": "navigation"
+          "group": "navigation",
+          "when": "view == netapp-fsx-ontap.tree"
         },
         {
           "command": "netapp-fsx-ontap.refresh",
-          "group": "navigation"
+          "group": "navigation",
+          "when": "view == netapp-fsx-ontap.tree"
         }
       ],
       "view/item/context": [
