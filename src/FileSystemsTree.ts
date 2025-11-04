@@ -63,7 +63,7 @@ export class FileSystemsTree implements vscode.TreeDataProvider<vscode.TreeItem>
                 const items: vscode.TreeItem[] = [];
                 const svms = await listSvms(element.id || '', e.region);
                 items.push(...svms.map(svm => {
-                    const svmItem = new SVMItem(svm.Name || '', svm.StorageVirtualMachineId || '', svm, e.region, vscode.TreeItemCollapsibleState.Collapsed);
+                    const svmItem = new SVMItem(svm.Name || '', svm.StorageVirtualMachineId || '', svm, e.region, e.fs,vscode.TreeItemCollapsibleState.Collapsed);
                     return svmItem; 
                 }));
                 return items;
@@ -75,7 +75,7 @@ export class FileSystemsTree implements vscode.TreeDataProvider<vscode.TreeItem>
                 const items: vscode.TreeItem[] = [];
                 const volumes = await listVolumes(e.svm.StorageVirtualMachineId || '', e.svm.FileSystemId || '', e.region);
                 items.push(...volumes.map(volume => {
-                    const volumeItem = new VolumeItem(volume.Name || '', volume.VolumeId || '', e.region, volume, vscode.TreeItemCollapsibleState.None);
+                    const volumeItem = new VolumeItem(volume.Name || '', volume.VolumeId || '', e.region, volume, e.svm, e.fs, vscode.TreeItemCollapsibleState.None);
                     return volumeItem;
                 }));
                 return items;

@@ -32,6 +32,7 @@ export class SVMItem extends vscode.TreeItem {
 		public readonly id: string,
         public readonly svm: StorageVirtualMachine,
         public readonly region: string,
+		public readonly fs: FileSystem,
 		public readonly collapsibleState: vscode.TreeItemCollapsibleState,
 		public readonly command?: vscode.Command
 	) {
@@ -57,6 +58,8 @@ export class VolumeItem extends vscode.TreeItem {
 		public readonly id: string,
         public readonly region: string,
         public readonly volume: Volume,
+		public readonly svm: StorageVirtualMachine,
+		public readonly fs: FileSystem,
 		public readonly collapsibleState: vscode.TreeItemCollapsibleState,
 		public readonly command?: vscode.Command
 	) {

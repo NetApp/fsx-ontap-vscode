@@ -20,7 +20,7 @@ class State {
     readonly onDidChangeRegionsEvent = this.onDidChangeRegions.event;
 
     private selectedRegions: string[] = [];
-    private context: vscode.ExtensionContext = {} as vscode.ExtensionContext;
+    public context: vscode.ExtensionContext = {} as vscode.ExtensionContext;
     availableRegions: { [key: string]: { description: string } } = {};
     profiles: Profile[] = [];
     currentProfile: string = '';

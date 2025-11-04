@@ -4,6 +4,23 @@ import { executeOntapCommands, OntapExecutorResult } from './ontap_executor';
 import { state } from './state';
 import { copilot_filesystem_question, copilot_question } from './telemetryReporter';
 
+async function getWorkingLanguageModel(): Promise<vscode.LanguageModelChat | null> {
+    const chatModels = await vscode.lm.selectChatModels();
+    
+    for (const model of chatModels) {
+        try {
+            // Test the model with a simple request
+            const testMessage = vscode.LanguageModelChatMessage.Assistant('Hello');
+            await model.sendRequest([testMessage], {}, new vscode.CancellationTokenSource().token);
+            return model;
+        } catch (error) {
+            console.warn(`Model ${model.vendor}/${model.name} failed test:`, error);
+            continue;
+        }
+    }
+    
+    return null;
+}
 
 export async function handleChatRequest(
 	request: vscode.ChatRequest,
@@ -12,7 +29,13 @@ export async function handleChatRequest(
 	token: vscode.CancellationToken
 ): Promise<any> {
     try {
-        const chatModels = await vscode.lm.selectChatModels({ vendor: 'copilot' });
+        const chatModel = await getWorkingLanguageModel();
+
+        if (!chatModel) {
+            stream.markdown('No language models are available. Please ensure you have access to language models.');
+            return;
+        }
+        console.log(`Using language model: ${chatModel.vendor}/${chatModel.name}`);
 
         if(request.command === 'filesystem') {
             state.reporter.sendTelemetryEvent(copilot_filesystem_question, { prompt: request.prompt });
@@ -30,7 +53,7 @@ export async function handleChatRequest(
                 1. find the regex ^fs-[0-9a-f]{17}$ 
                 2. if the ^fs-[0-9a-f]{17}$ regex isnt found, from the context, look in the mapping that is provided. it is an array and each object has property of name and id and try to see if the name is in the prompt and map to the id, it must be exact match and not partial match. use this context ${JSON.stringify(nameIdMapping)}`
                  + "\n" + request.prompt);
-            const fileSystemIdRequest = await chatModels[0].sendRequest([fileSystemIdMessage], {}, token);
+            const fileSystemIdRequest = await chatModel.sendRequest([fileSystemIdMessage], {}, token);
             let fileSystemId = '';
             for await (const fragment of fileSystemIdRequest.text) {
                         fileSystemId = fileSystemId + fragment;
@@ -41,7 +64,7 @@ export async function handleChatRequest(
             };
             stream.markdown(`\nI understand that the user wants information about filesystem id: ${fileSystemId}\n`);
             const cliMessage = vscode.LanguageModelChatMessage.Assistant('You are a Netapp ONTAP master. Your job is to suggest which Netapp ONTAP CLI commands need to run in order to answer the user question. You can use https://docs.netapp.com/us-en/ontap-cli/ to get all the CLIs, use version 9.16.1. Return the result as JSON string array without the ```json``` in the format of [{"command": <cli command>}]. If in the prompt there is a filesystem id with the regex ^fs-[0-9a-f]{17}$, dont use it as a parameter in the CLI, not as a volume or anything.The suggested commands are not allowed to modify state only to show information. Dont suggest commands that has placeholder in the pattern of <> instead use * for all entities.' + "\n" + request.prompt);
-            const cliRequest = await chatModels[0].sendRequest([cliMessage], {}, token);
+            const cliRequest = await chatModel.sendRequest([cliMessage], {}, token);
             let clis = '';
             for await (const fragment of cliRequest.text) {
                 clis = clis + fragment;
@@ -67,7 +90,7 @@ export async function handleChatRequest(
                 stream.markdown(`\nNote: Some commands failed to execute. Trying again...\n`);
                 const errorsMessage = vscode.LanguageModelChatMessage.Assistant('You are a Netapp ONTAP master. Your job is to suggest which Netapp ONTAP CLI commands need to run in order to answer the user question. You can use https://docs.netapp.com/us-en/ontap-cli/ to get all the CLIs, use version 9.16.1. Return the result as JSON string array without the ```json``` in the format of [{"command": <cli command>}]. If in the prompt there is a filesystem id with the regex ^fs-[0-9a-f]{17}$, dont use it as a parameter in the CLI, not as a volume or anything.'
                      + `When I first asked you the question you gave me some commands which were wrong, please suggest the correct commands. Here are the wrong commands and their ONTAP errors ${JSON.stringify(errors)}` + "\n" + request.prompt);
-                const errorsRequest = await chatModels[0].sendRequest([errorsMessage], {}, token);
+                const errorsRequest = await chatModel.sendRequest([errorsMessage], {}, token);
                 let errclis = '';
                 for await (const fragment of errorsRequest.text) {
                             errclis = errclis + fragment;
@@ -91,7 +114,7 @@ export async function handleChatRequest(
                   If the results do not help you answer the question, say you dont know.
                   Use this format for your answer: Question: <repeat the user question> Answer: <your answer>. 
                   Here are the command results: ${JSON.stringify(validResults)}` + "\n" + request.prompt);
-            const messageWithResultsRequest = await chatModels[0].sendRequest([messageWithResults], {}, token);
+            const messageWithResultsRequest = await chatModel.sendRequest([messageWithResults], {}, token);
             stream.markdown('\n');
             for await (const fragment of messageWithResultsRequest.text) {
                         stream.markdown(fragment);
@@ -105,7 +128,7 @@ export async function handleChatRequest(
             stream.progress('processing request...');
             const entitiesMessage = vscode.LanguageModelChatMessage.Assistant('You are an AWS FSX ONTAP expert. From the user prompt please return as a json string array without the ```json``` that I can parse which of the below entities are asked from the user, can be one or more : filesystems, volumes, svms, backups'
                  + " if you see that there is a need for filesystems and volumes and also svms" + "\n" + request.prompt);
-            const entitiesRequest = await chatModels[0].sendRequest([entitiesMessage], {}, token);
+            const entitiesRequest = await chatModel.sendRequest([entitiesMessage], {}, token);
 
             let ent = '';
             for await (const fragment of entitiesRequest.text) {
@@ -116,7 +139,7 @@ export async function handleChatRequest(
             const volumeMetrics: string[] = [];
             if(entities.length > 0) {
                 const fsMetricsMessage = vscode.LanguageModelChatMessage.Assistant('You are an AWS FSX ONTAP expert. From the user prompt advise if there is a need to query cloudwatch metrics for the filesystems. If so return it only as as a json string array without the ```json``` that I can parse which of the below filesystem metrics are asked from the user, can be one or more : ' + FileSystemMetrics.join(', ') + " use this url for more information https://docs.aws.amazon.com/fsx/latest/ONTAPGuide/file-system-metrics.html" + "\n" + request.prompt);
-                const fsMetricsRequest = await chatModels[0].sendRequest([fsMetricsMessage], {}, token);
+                const fsMetricsRequest = await chatModel.sendRequest([fsMetricsMessage], {}, token);
                 let fsmet = '';
                 for await (const fragment of fsMetricsRequest.text) {
                             fsmet = fsmet + fragment;
@@ -129,7 +152,7 @@ export async function handleChatRequest(
                 
 
                 const volumeMetricsMessage = vscode.LanguageModelChatMessage.Assistant('You are an AWS FSX ONTAP expert. From the user prompt advise if there is a need to query cloudwatch metrics for the filesystem volumes. If so return response that contains it only as as a json string array without the ```json``` that I can parse which of the below volume metrics are asked from the user, can be one or more : ' + VolumeMetrics.join(', ') + " use this url for more information https://docs.aws.amazon.com/fsx/latest/ONTAPGuide/volume-metrics.html" + "\n" + request.prompt);
-                const volumeMetricsRequest = await chatModels[0].sendRequest([volumeMetricsMessage], {}, token);
+                const volumeMetricsRequest = await chatModel.sendRequest([volumeMetricsMessage], {}, token);
                 let vmet = '';
                 for await (const fragment of volumeMetricsRequest.text) {
                             vmet = vmet + fragment;
@@ -195,7 +218,7 @@ export async function handleChatRequest(
                 The format is collection of backups. context: ${JSON.stringify(entitiesResults.backups || [])}`));*/
            
 
-            const userResult = await chatModels[0].sendRequest(messages, {}, token);
+            const userResult = await chatModel.sendRequest(messages, {}, token);
             for await (const fragment of userResult.text) {
                         stream.markdown(fragment);
             }

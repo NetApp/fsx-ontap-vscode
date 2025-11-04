@@ -6,7 +6,7 @@
   },
   "displayName": "NetApp FSx ONTAP",
   "description": "",
-  "version": "1.0.3",
+  "version": "1.0.5",
   "engines": {
     "vscode": "^1.102.0"
   },
@@ -101,6 +101,12 @@
         "category": "NetApp FSx ONTAP"
       },
       {
+        "command": "netapp-fsx-ontap.add-ontap-login-details",
+        "title": "Configure ONTAP connection details",
+        "category": "NetApp FSx ONTAP",
+        "icon": "$(account)"
+      },
+      {
         "command": "netapp-fsx-ontap.addSvm",
         "title": "Add SVM",
         "category": "NetApp FSx ONTAP",
@@ -152,6 +158,12 @@
         "title": "Show Welcome",
         "category": "NetApp FSx ONTAP",
         "icon": "$(home)"
+      },
+      {
+        "command": "netapp-fsx-ontap.createSnapshot",
+        "title": "Create Snapshot",
+        "category": "NetApp FSx ONTAP",
+        "icon": "$(device-camera)"
       }
     ],
     "menus": {
@@ -182,6 +194,11 @@
           "command": "netapp-fsx-ontap.addSvm-terraform",
           "when": "viewItem == filesystem",
           "group": "navigation"
+        },
+        {
+          "command": "netapp-fsx-ontap.add-ontap-login-details",
+          "when": "viewItem == filesystem",
+          "group": "inline"
         },
         {
           "command": "netapp-fsx-ontap.addVolume-terraform",
@@ -222,6 +239,11 @@
           "command": "netapp-fsx-ontap.addVolume",
           "when": "viewItem == svm",
           "group": "inline"
+        },
+        {
+          "command": "netapp-fsx-ontap.createSnapshot",
+          "when": "viewItem == volume",
+          "group": "inline"
         }
       ]
     }
@@ -243,7 +265,7 @@
     "@types/mocha": "^10.0.10",
     "@types/node": "20.x",
     "@types/ssh2": "^1.15.5",
-    "@types/vscode": "^1.102.0",
+    "@types/vscode": "^1.105.0",
     "@typescript-eslint/eslint-plugin": "^8.31.1",
     "@typescript-eslint/parser": "^8.31.1",
     "@vscode/test-cli": "^0.0.11",
@@ -252,11 +274,12 @@
     "typescript": "^5.8.3"
   },
   "dependencies": {
-    "@aws-sdk/client-cloudwatch": "^3.864.0",
-    "@aws-sdk/client-fsx": "^3.859.0",
-    "@aws-sdk/client-sts": "^3.859.0",
-    "@smithy/shared-ini-file-loader": "^4.0.4",
-    "@vscode/extension-telemetry": "^1.0.0",
+    "@aws-sdk/client-cloudwatch": "^3.922.0",
+    "@aws-sdk/client-fsx": "^3.922.0",
+    "@aws-sdk/client-sts": "^3.922.0",
+    "@smithy/shared-ini-file-loader": "^4.3.4",
+    "@vscode/extension-telemetry": "^1.1.0",
+    "axios": "^1.13.1",
     "lodash": "^4.17.21",
     "ssh2": "^1.17.0"
   }

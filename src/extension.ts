@@ -1,12 +1,13 @@
 // The module 'vscode' contains the VS Code extensibility API
 // Import the module and reference it with the alias vscode in your code below
 import * as vscode from 'vscode';
-import { addSvmCommand, createVolume, selectProfile, selectRegion, sshToFileSystem } from './commands';
+import { addOntapLoginDetails, addSvmCommand, createSnapshot, createVolume, selectProfile, selectRegion, sshToFileSystem } from './commands';
 import { state } from './state';
 import { FileSystemsTree } from './FileSystemsTree';
 import { SimpleScriptCreator } from './SimpleScriptCreator';
 import { handleChatRequest } from './copilot_herlper';
 import { WelcomeEditor } from './WelcomeEditor';
+import { SSHService } from './sshService';
 
 // This method is called when your extension is activated
 // Your extension is activated the very first time the command is executed
@@ -78,6 +79,10 @@ export async function activate(context: vscode.ExtensionContext) {
 		createVolume(svm.id, svm.region, () => treeDataProvider.refresh());
 	});
 
+	const createSnapshotCommand = vscode.commands.registerCommand('netapp-fsx-ontap.createSnapshot', async (volume: any) => {
+		await createSnapshot(volume.fs, volume.svm.Name, volume.volume.Name, volume.region);
+	});
+
 	const showVolumeTerraformCommand = vscode.commands.registerCommand('netapp-fsx-ontap.addVolume-terraform', async (svm: any) => {
 		await SimpleScriptCreator.createVolumeTerraformScript(svm.id, svm.region);
 	});
@@ -94,6 +99,10 @@ export async function activate(context: vscode.ExtensionContext) {
 		WelcomeEditor.createWelcomePanel(context);
 	});
 
+	const registerOntapLoginDetailsCommand = vscode.commands.registerCommand('netapp-fsx-ontap.add-ontap-login-details', async (filesystem: any) => {
+		await addOntapLoginDetails(filesystem);
+	});
+	
 	const chatParticipant = vscode.chat.createChatParticipant('netapp-fsx-ontap.helper', handleChatRequest);
 	chatParticipant.iconPath = vscode.Uri.file(context.asAbsolutePath('resources/chat.svg'));
 
@@ -109,11 +118,13 @@ export async function activate(context: vscode.ExtensionContext) {
 		showSvmCliCommand,
 		sshToFileSystemCommand,
 		createVolumeCommand,
+		createSnapshotCommand,
 		showVolumeTerraformCommand,
 		showVolumeCloudFormationCommand,
 		showVolumeCliCommand,
 		showWelcomeCommand,
-		chatParticipant
+		chatParticipant,
+		registerOntapLoginDetailsCommand
 	);
 
 

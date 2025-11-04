@@ -10,6 +10,7 @@ const path = require('path');
 
 function injectTelemetryKey() {
     const telemetryKey = process.env.TELEMETRY_KEY || process.env.APPLICATION_INSIGHTS_KEY;
+    const telemetryHMACKey = process.env.TELEMETRY_HMAC_KEY || process.env.APPLICATION_INSIGHTS_HMAC_KEY;
     
     if (!telemetryKey) {
         console.warn('⚠️  No telemetry key found in environment variables');
@@ -24,6 +25,7 @@ function injectTelemetryKey() {
 // This file is generated during build and should not be committed to git
 
 exports.TelemetryKey = '${telemetryKey}';
+exports.TelemetryExternalHMACKey = '${telemetryHMACKey || ''}';
 
 exports.isTelemetryEnabled = function() {
     return exports.TelemetryKey.length > 0;
@@ -36,6 +38,7 @@ exports.getTelemetryConfig = function() {
     
     return {
         key: exports.TelemetryKey,
+        hmacKey: exports.TelemetryExternalHMACKey,
         enabled: true
     };
 };

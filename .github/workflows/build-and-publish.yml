@@ -33,11 +33,14 @@ jobs:
         env:
           TELEMETRY_KEY: ${{ secrets.TELEMETRY_KEY }}
           APPLICATION_INSIGHTS_KEY: ${{ secrets.APPLICATION_INSIGHTS_KEY }}
+          TELEMETRY_HMAC_KEY: ${{ secrets.TELEMETRY_HMAC_KEY }}
+          APPLICATION_INSIGHTS_HMAC_KEY: ${{ secrets.APPLICATION_INSIGHTS_HMAC_KEY }}
 
       - name: Package extension
         run: npm run package
         env:
           TELEMETRY_KEY: ${{ secrets.TELEMETRY_KEY }}
+          TELEMETRY_HMAC_KEY: ${{ secrets.TELEMETRY_HMAC_KEY }}
 
       - name: Upload VSIX artifact
         uses: actions/upload-artifact@v4

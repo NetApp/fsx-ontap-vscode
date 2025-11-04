@@ -2,6 +2,7 @@ import { getTelemetryConfig, isTelemetryEnabled } from "./telemetryKey";
 import * as vscode from 'vscode';
 import { TelemetryReporter } from '@vscode/extension-telemetry';
 import { state } from "./state";
+import { TelemetryExternalReporter } from "./telemetryExternalReporter";
 
 export const create_svm_success = 'create-svm-success';
 export const create_svm_failure = 'create-svm-failure';
@@ -10,11 +11,15 @@ export const create_volume_failure = 'create-volume-failure';
 export const copilot_question = 'copilot-question';
 export const copilot_filesystem_question = 'copilot-filesystem-question';
 export const ssh_to_fs = 'ssh-to-fs';
+export const create_snapshot_success = 'create-snapshot-success';
+export const create_snapshot_failure = 'create-snapshot-failure';
+export const select_profile = 'select-profile';
 
 export class FsxTelemetryReporter {
 
     private reporter: TelemetryReporter | undefined;
     private telemetryEnabled: boolean = false;
+    private externalReporter: TelemetryExternalReporter = new TelemetryExternalReporter();
     
     constructor() {
         this.telemetryEnabled = isTelemetryEnabled();
@@ -52,11 +57,13 @@ export class FsxTelemetryReporter {
         try {
             const baseProperties = {
                 userId: state.userId,
-                sessionId: state.sessionId,
+                sessionId: vscode.env.sessionId,
                 company: company
             };
             properties = { ...baseProperties, ...properties };
             this.reporter.sendTelemetryEvent(eventName, properties, measurements);
+            const config = getTelemetryConfig();
+            this.externalReporter.sendTelemetryEvent(eventName, properties, config?.hmacKey || '');
         } catch (error) {
             console.warn('Failed to send telemetry event:', error);
         }

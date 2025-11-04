@@ -1,12 +1,14 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
+import { state } from './state';
 
-export interface SSHConnectionInfo {
-    ip:  string; // IP address of the instance
-    host: string;
+export type SSHConnectionInfo = {
+    privateIpAddress:  string; // IP address of the instance
+    host?: string;
     username?: string;          
-    connectionName: string;
-    endpointId?: string;
+    connectionName?: string;
+    instanceConnectEndpointId?: string;
+    password?: string;
 }
 
 export class SSHService {
@@ -14,9 +16,9 @@ export class SSHService {
 
     static async sshToFileSystem(fileSystemId: string, fileSystemName: string, region: string, ip: string): Promise<void> {
         try {
-           
+            const sshInfoStr = await state.context.secrets.get(`sshKey-${fileSystemId}-${region}`); // Example of using context
             // For now, we'll show a mock connection dialog
-            const connectionInfo = await this.getFileSystemConnectionInfo(fileSystemId, fileSystemName, region, ip);
+            const connectionInfo = sshInfoStr ? JSON.parse(sshInfoStr) : await this.getFileSystemConnectionInfo(fileSystemId, fileSystemName, region, ip);
 
             if (connectionInfo) {
                 await this.establishSSHConnection(connectionInfo);
@@ -40,8 +42,10 @@ export class SSHService {
     /**
      * Prompt user for SSH connection details
      */
-    private static async promptForConnectionDetails(host: string, resourceName: string, ip: string): Promise<SSHConnectionInfo | undefined> {
+    public static async promptForConnectionDetails(host: string, resourceName: string, ip: string, promptForPassword: boolean = false): Promise<SSHConnectionInfo | undefined> {
         
+        let password: string | undefined;
+
         // Get username
         const username = await vscode.window.showInputBox({
             prompt: 'Enter SSH username',
@@ -53,6 +57,13 @@ export class SSHService {
             return undefined;
         }
 
+        if (promptForPassword) {
+            password = await vscode.window.showInputBox({
+                prompt: 'Enter SSH password',
+                password: true,
+                placeHolder: 'Your SSH password'
+            });
+        }
         const connectionOptions = await vscode.window.showQuickPick([
             { label: 'Direct', value: 'direct' },
             { label: 'EC2 Instance Connect', value: 'tunneling' },
@@ -76,10 +87,11 @@ export class SSHService {
         // For 'default', keyPath remains undefined (will use SSH agent)
 
         return {
-            ip: ip,
+            privateIpAddress: ip,
             host: host,
             username: username,
-            endpointId: endpointId,
+            password: password,
+            instanceConnectEndpointId: endpointId,
             connectionName: `${resourceName} (ip: ${ip})`
         };
     }
@@ -88,7 +100,6 @@ export class SSHService {
      * Establish SSH connection
      */
     private static async establishSSHConnection(connectionInfo: SSHConnectionInfo): Promise<void> {
-        // Method 1: Open integrated terminal with SSH command
         await this.openSSHInTerminal(connectionInfo);
     }
 
@@ -97,17 +108,17 @@ export class SSHService {
      */
     private static async openSSHInTerminal(connectionInfo: SSHConnectionInfo): Promise<void> {
         const terminal = vscode.window.createTerminal({
-            name: `SSH: ${connectionInfo.connectionName}`,
+            name: `SSH: ${connectionInfo.connectionName || connectionInfo.privateIpAddress}`,
             iconPath: new vscode.ThemeIcon('terminal')
         });
 
         // Build SSH command
-        let sshCommand = `ssh ${connectionInfo.username}@${connectionInfo.host}`;
+        let sshCommand = `ssh ${connectionInfo.username}@${connectionInfo.privateIpAddress}`;
         
        
         
-        if (connectionInfo.endpointId) {
-            sshCommand += ` -o ProxyCommand='aws ec2-instance-connect open-tunnel --instance-connect-endpoint-id ${connectionInfo.endpointId} --private-ip-address ${connectionInfo.ip}'`;
+        if (connectionInfo.instanceConnectEndpointId) {
+            sshCommand += ` -o ProxyCommand='aws ec2-instance-connect open-tunnel --instance-connect-endpoint-id ${connectionInfo.instanceConnectEndpointId} --private-ip-address ${connectionInfo.privateIpAddress}'`;
         }
 
         // Add common SSH options

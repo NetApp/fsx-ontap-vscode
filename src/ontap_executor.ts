@@ -3,73 +3,88 @@ import * as vscode from 'vscode';
 import * as net from 'net';
 import { Client }  from 'ssh2';
 import { ChildProcess, spawn } from 'child_process';
+import { state } from './state';
+import { SSHConnectionInfo, SSHService } from './sshService';
+import { FileSystem } from '@aws-sdk/client-fsx';
 
 export type OntapCommandResult = { command: string; exitCode: number; output: string; error: string; success: boolean; }
-export type ConnectionContext = { username: string; password: string; instanceConnectEndpointId?: string; privateIpAddress?: string; };
-export type OntapExecutorResult = { result: OntapCommandResult[]; connectionContext: ConnectionContext; };
+export type OntapExecutorResult = { result: OntapCommandResult[]; connectionContext: SSHConnectionInfo; };
 
-export async function executeOntapCommands(fileSystem: any, commands: string[],
-     providedConnectionContext?: ConnectionContext, stream?: vscode.ChatResponseStream): Promise<OntapExecutorResult> {
+async function getConnectionContextFromSecret(fileSystemId: string, region: string): Promise<SSHConnectionInfo | null> {
+    const sshInfoStr = await state.context.secrets.get(`sshKey-${fileSystemId}-${region}`);
+    if (sshInfoStr) {
+        return JSON.parse(sshInfoStr);
+    }
+   
+    return null;
+}
+
+function extractRegionFromArn(arn: string): string | null {
+    if (!arn || typeof arn !== 'string') {
+        return null;
+    }
+
+    const arnParts = arn.split(':');
+    
+    // ARN should have at least 6 parts: arn:partition:service:region:account-id:resource
+    if (arnParts.length < 6 || arnParts[0] !== 'arn') {
+        return null;
+    }
+
+    const region = arnParts[3];
+    
+    // Region can be empty for some global services, but we return it as-is
+    return region || null;
+}
+
+export async function executeOntapCommands(fileSystem: FileSystem, commands: string[],
+     providedConnectionContext?: SSHConnectionInfo, stream?: vscode.ChatResponseStream): Promise<OntapExecutorResult> {
 
     const sshConfig = {
         username:  '',
         password:  ''
     };
 
+    if(!fileSystem.OntapConfiguration) {
+        throw new Error('ONTAP configuration not found for the specified file system.');
+    }
     const config = {
             instanceConnectEndpointId: '',
-            privateIpAddress: fileSystem.OntapConfiguration.Endpoints.Management.IpAddresses[0]
+            privateIpAddress: fileSystem.OntapConfiguration?.Endpoints?.Management?.IpAddresses?.[0] || ''
     };
+   const region = extractRegionFromArn(fileSystem.ResourceARN as string);
+   const currentProvidedConnectionContext = providedConnectionContext ? providedConnectionContext : await getConnectionContextFromSecret(fileSystem.FileSystemId as string, region || '');
+   if(!currentProvidedConnectionContext) {
+        const connectionDetails = await SSHService.promptForConnectionDetails(fileSystem.OntapConfiguration?.Endpoints?.Management?.DNSName || '' ,
+                 fileSystem.FileSystemId as string, fileSystem.OntapConfiguration?.Endpoints?.Management?.IpAddresses?.[0] || '', true);
+       
+        sshConfig.password = connectionDetails?.password || '';
+        sshConfig.username = connectionDetails?.username || 'fsxadmin';
 
-   if(!providedConnectionContext) {
-        const username = await vscode.window.showInputBox({
-            prompt: 'Enter SSH username',
-            value: 'fsxadmin', // Default for FSx
-            placeHolder: 'e.g., fsxadmin'
-        });
+        if (connectionDetails?.instanceConnectEndpointId) {
+            config.instanceConnectEndpointId = connectionDetails.instanceConnectEndpointId;
+        }
+   } else {
 
-        // Get username
-        const password = await vscode.window.showInputBox({
+       if(!currentProvidedConnectionContext.password) {
+          currentProvidedConnectionContext.password = await vscode.window.showInputBox({
             prompt: 'Enter SSH password',
             value: '', // Default for FSx
             password: true
-        });
-
-        const connectionOptions = await vscode.window.showQuickPick([
-            { label: 'Direct', value: 'direct' },
-            { label: 'EC2 Instance Connect', value: 'tunneling' },
-        ], {
-            placeHolder: 'How do you want to connect?'
-        });
-
-        let endpointId: string | undefined;
-        if (connectionOptions?.value === 'tunneling') {
-            endpointId = await vscode.window.showInputBox({
-                prompt: 'Enter instance connect endpoint ID',
-                placeHolder: 'e.g., eice-009518b0a3ab6ac67'
-            });
-
-        }
-
-        sshConfig.password = password || '';
-        sshConfig.username = username || 'fsxadmin';
-
-        if (connectionOptions?.value === 'tunneling' && endpointId) {
-            config.instanceConnectEndpointId = endpointId;
-        }
-   } else {
-       sshConfig.password = providedConnectionContext.password;
-       sshConfig.username = providedConnectionContext.username;
-       config.instanceConnectEndpointId = providedConnectionContext.instanceConnectEndpointId || '';
-       config.privateIpAddress = providedConnectionContext.privateIpAddress || config.privateIpAddress;
+          }) as string;
+       }
+       sshConfig.password = currentProvidedConnectionContext.password;
+       sshConfig.username = currentProvidedConnectionContext.username || 'fsxadmin';
+       config.instanceConnectEndpointId = currentProvidedConnectionContext.instanceConnectEndpointId || '';
+       config.privateIpAddress = currentProvidedConnectionContext.privateIpAddress || config.privateIpAddress;
    }
    
     stream?.markdown(`\nEstablishing SSH connection to ${config.privateIpAddress} as ${sshConfig.username}...\n`);
-    const connectionContext: ConnectionContext = {
+    const connectionContext: SSHConnectionInfo = {
         username:  sshConfig.username,
         password:  sshConfig.password,
         instanceConnectEndpointId: config.instanceConnectEndpointId,
-        privateIpAddress: config.privateIpAddress 
+        privateIpAddress: config.privateIpAddress as string 
     };
     
     if (connectionContext.instanceConnectEndpointId) {

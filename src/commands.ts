@@ -1,9 +1,10 @@
 import * as vscode from 'vscode';
 import { state } from './state';
-import { stat } from 'fs';
 import { addSvm, addVolume } from './FileSystemApis';
 import { SSHService } from './sshService';
-import { ssh_to_fs } from './telemetryReporter';
+import { select_profile, ssh_to_fs } from './telemetryReporter';
+import { executeOntapCommands } from './ontap_executor';
+import { FileSystem } from '@aws-sdk/client-fsx';
 
 export async function selectRegion() {
      const window = vscode.window;
@@ -30,6 +31,12 @@ export async function selectRegion() {
 
 export async function selectProfile() {
     const window = vscode.window;
+    const hasActiveProfile = state.profiles.find(p => !p.error);
+    if(!hasActiveProfile){
+        vscode.window.showErrorMessage('No valid AWS profiles available. Please check your AWS configuration.');
+        return;
+    }
+
     const items: vscode.QuickPickItem[] = state.profiles.map(profile => ({
         label: profile.profileName,
         description: profile.error ? `Error: ${profile.error}` : '',
@@ -42,8 +49,10 @@ export async function selectProfile() {
 
     if (result && !result.description) {
         state.currentProfile = result.label;
+        state.reporter.sendTelemetryEvent(select_profile, { profile: state.currentProfile });
         state.onDidChangeActiveProfile.fire(state.currentProfile);
     } else {
+        vscode.window.showErrorMessage('Invalid profile selected. Please select a valid AWS profile.');
         selectProfile(); // Re-prompt if an error profile is selected
     }
 }
@@ -69,7 +78,39 @@ export async function addSvmCommand(fileSystem: any, region: string, refreshFunc
 export async function sshToFileSystem(item: any) {
     state.reporter.sendTelemetryEvent(ssh_to_fs, { region: item.region, fsId: item.id });
     await SSHService.sshToFileSystem(item.id, item.name, item.region, item.fs.OntapConfiguration.Endpoints.Management.IpAddresses[0]);
-    
+}
+
+export async function addOntapLoginDetails(fileSystem: any)  {
+    try{
+        const connectionDetails = await SSHService.promptForConnectionDetails(fileSystem.fs.OntapConfiguration.Endpoints.Management.DNSName ,
+         fileSystem.id, fileSystem.fs.OntapConfiguration.Endpoints.Management.IpAddresses[0], true);
+        await executeOntapCommands(fileSystem.fs, ['volume show'], connectionDetails);
+        await state.context.secrets.store(`sshKey-${fileSystem.id}-${fileSystem.region}`, JSON.stringify(connectionDetails));
+        vscode.window.showInformationMessage(`ONTAP login details for file system ${fileSystem.id} added successfully.`);
+    } catch (error: any) {
+        vscode.window.showErrorMessage(`Error adding ONTAP login details: ${error.message}`);   
+    }
+   
+}
+
+export async function createSnapshot(fs: FileSystem, svmName: string, volumeName: string, region: string) {
+    const snapshotName = await vscode.window.showInputBox({
+                prompt: 'Enter snapshot name',
+                value: `${volumeName}-snapshot-${new Date().toISOString().replace(/[:.-]/g, '')}`, 
+                placeHolder: 'e.g., snapshot1'
+            });
+    try {
+        if (!snapshotName) {
+            vscode.window.showWarningMessage('Snapshot creation cancelled: No name provided.');
+            return;
+        }
+        vscode.window.showInformationMessage(`Creating snapshot ${snapshotName} on volume ${volumeName}...`);
+        await executeOntapCommands(fs, [`volume snapshot create -vserver ${svmName} -volume ${volumeName} -snapshot ${snapshotName}`]);
+        state.reporter.sendTelemetryEvent('create_snapshot', { region: region, volumeName: volumeName, svmName: svmName, snapshotName: snapshotName });
+        vscode.window.showInformationMessage(`Snapshot ${snapshotName} created successfully on volume ${volumeName}.`);
+    } catch (error) {
+        vscode.window.showErrorMessage(`Error creating snapshot ${snapshotName}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
 }
 
 export async function createVolume(svmId: string, region: string, refreshFunc: () => void) {
