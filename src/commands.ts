@@ -5,6 +5,7 @@ import { SSHService } from './sshService';
 import { select_profile, ssh_to_fs } from './telemetryReporter';
 import { executeOntapCommands } from './ontap_executor';
 import { FileSystem } from '@aws-sdk/client-fsx';
+import { ensureSsoLogin, isSsoProfile, needsSsoLogin } from './awsSsoHelper';
 
 export async function selectRegion() {
      const window = vscode.window;
@@ -37,21 +38,49 @@ export async function selectProfile() {
         return;
     }
 
-    const items: vscode.QuickPickItem[] = state.profiles.map(profile => ({
-        label: profile.profileName,
-        description: profile.error ? `Error: ${profile.error}` : '',
-        picked: profile.profileName === state.currentProfile,
-    }));
+    const items: vscode.QuickPickItem[] = state.profiles.map(profile => {
+        const isSso = profile.isSso || false;
+        let description = '';
+        if (profile.error) {
+            description = `Error: ${profile.error}`;
+        } else if (isSso) {
+            description = 'SSO Profile';
+        }
+        return {
+            label: profile.profileName,
+            description: description,
+            picked: profile.profileName === state.currentProfile,
+        };
+    });
 
     const result = await window.showQuickPick(items, {
         placeHolder: 'Select an AWS profile',
     });
 
-    if (result && !result.description) {
-        state.currentProfile = result.label;
+    if (result && !result.description?.startsWith('Error:')) {
+        const selectedProfile = result.label;
+        const profileInfo = state.profiles.find(p => p.profileName === selectedProfile);
+        
+        // If it's an SSO profile, check if login is needed
+        if (profileInfo?.isSso) {
+            const needsLogin = await needsSsoLogin(selectedProfile);
+            if (needsLogin) {
+                const loginResult = await ensureSsoLogin(selectedProfile);
+                if (!loginResult.success) {
+                    vscode.window.showErrorMessage(`Failed to login to AWS SSO: ${loginResult.message}`);
+                    // Still allow selection, user might want to retry
+                } else {
+                    vscode.window.showInformationMessage(loginResult.message);
+                    // Reload profiles to update their status
+                    await state.loadProfiles();
+                }
+            }
+        }
+        
+        state.currentProfile = selectedProfile;
         state.reporter.sendTelemetryEvent(select_profile, { profile: state.currentProfile });
         state.onDidChangeActiveProfile.fire(state.currentProfile);
-    } else {
+    } else if (result && result.description?.startsWith('Error:')) {
         vscode.window.showErrorMessage('Invalid profile selected. Please select a valid AWS profile.');
         selectProfile(); // Re-prompt if an error profile is selected
     }

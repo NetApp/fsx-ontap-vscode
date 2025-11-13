@@ -5,10 +5,12 @@ import * as fs from 'fs';
 import { keys } from 'lodash';
 import path from 'path';
 import { FsxTelemetryReporter } from './telemetryReporter';
+import { isSsoProfile } from './awsSsoHelper';
 
 export type Profile = {
     profileName: string;
     error? : string;
+    isSso?: boolean;
 }
 
 class State {
@@ -63,10 +65,20 @@ class State {
 
     async loadProfiles() {
         this.profiles = [];
-        const profiles = await loadSharedConfigFiles();
-        const profileKeys = keys(profiles.credentialsFile);
-        console.log('Loaded profiles:', profileKeys);
-        await this.checkProfiles(profileKeys);
+        const configFiles = await loadSharedConfigFiles();
+        
+        // Get profiles from both config file (where SSO profiles are) and credentials file
+        const configFileKeys = keys(configFiles.configFile || {});
+        const credentialsFileKeys = keys(configFiles.credentialsFile || {});
+        
+        // Merge and deduplicate profile names
+        const allProfileKeys = Array.from(new Set([...configFileKeys, ...credentialsFileKeys]));
+        
+        console.log('Loaded profiles from config file:', configFileKeys);
+        console.log('Loaded profiles from credentials file:', credentialsFileKeys);
+        console.log('All profiles:', allProfileKeys);
+        
+        await this.checkProfiles(allProfileKeys);
         const hasValidDefault = this.profiles.find(profile => profile.profileName === 'default' && !profile.error);
         if (hasValidDefault) {
             this.currentProfile = hasValidDefault.profileName;
@@ -77,12 +89,14 @@ class State {
         
         for (const profile of profiles) {
             try {
+                const isSso = await isSsoProfile(profile);
                 const stsClient = new STSClient({ region: "us-east-1", profile: profile });
                 const command = new GetCallerIdentityCommand({});
                 await stsClient.send(command);
-                this.profiles.push({ profileName: profile });
+                this.profiles.push({ profileName: profile, isSso });
             } catch (error) {
-                this.profiles.push({ profileName: profile, error: (error as Error).message });
+                const isSso = await isSsoProfile(profile);
+                this.profiles.push({ profileName: profile, error: (error as Error).message, isSso });
             }
         }
 

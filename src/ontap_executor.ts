@@ -183,14 +183,20 @@ async function executeONTAPCommands(sshClient: Client, commands: string[], strea
 
 function startTunnel(localPort: number, config: { instanceConnectEndpointId: string; privateIpAddress: string; }): Promise<ChildProcess> {
   return new Promise((resolve, reject) => {
-    
-    const tunnel = spawn('aws', [
+    const awsArgs = [
       'ec2-instance-connect',
       'open-tunnel',
       '--instance-connect-endpoint-id', config.instanceConnectEndpointId,
       '--private-ip-address', config.privateIpAddress,
       '--local-port', localPort.toString()
-    ], {
+    ];
+    
+    // Add profile if one is selected
+    if (state.currentProfile) {
+      awsArgs.push('--profile', state.currentProfile);
+    }
+    
+    const tunnel = spawn('aws', awsArgs, {
       stdio: ['pipe', 'pipe', 'pipe'],
       env: process.env
     });
