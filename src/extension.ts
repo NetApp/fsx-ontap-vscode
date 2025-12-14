@@ -100,7 +100,11 @@ export async function activate(context: vscode.ExtensionContext) {
 	});
 
 	const registerOntapLoginDetailsCommand = vscode.commands.registerCommand('netapp-fsx-ontap.add-ontap-login-details', async (filesystem: any) => {
-		await addOntapLoginDetails(filesystem);
+		await addOntapLoginDetails(filesystem, () => treeDataProvider.refresh());
+	});
+
+	const registerUpdateOntapLoginDetailsCommand = vscode.commands.registerCommand('netapp-fsx-ontap.update-ontap-login-details', async (filesystem: any) => {
+		await addOntapLoginDetails(filesystem, () => treeDataProvider.refresh());
 	});
 	
 	const chatParticipant = vscode.chat.createChatParticipant('netapp-fsx-ontap.helper', handleChatRequest);
@@ -124,7 +128,8 @@ export async function activate(context: vscode.ExtensionContext) {
 		showVolumeCliCommand,
 		showWelcomeCommand,
 		chatParticipant,
-		registerOntapLoginDetailsCommand
+		registerOntapLoginDetailsCommand,
+		registerUpdateOntapLoginDetailsCommand
 	);
 
 

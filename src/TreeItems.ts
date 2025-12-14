@@ -8,21 +8,18 @@ export class FileSystemsItem extends vscode.TreeItem {
         public readonly fs: FileSystem,
         public readonly region: string,
 		public readonly collapsibleState: vscode.TreeItemCollapsibleState,
+		public readonly hasOntapLoginDetails: boolean,
 		public readonly command?: vscode.Command
 	) {
 		super(name, collapsibleState);
 
 		this.tooltip = `${this.name}`;
 		this.description = this.id;
-		this.iconPath = new vscode.ThemeIcon('cloud');
+		this.iconPath = this.hasOntapLoginDetails ? new vscode.ThemeIcon('pass-filled') : new vscode.ThemeIcon('cloud'); 
+		this.contextValue = this.hasOntapLoginDetails ? 'filesystem-withLoginDetails' : 'filesystem';
 	}
 
-	/*iconPath = {
-		light: path.join(__filename, '..', '..', 'resources', 'light', 'dependency.svg'),
-		dark: path.join(__filename, '..', '..', 'resources', 'dark', 'dependency.svg')
-	};*/
-
-	contextValue = 'filesystem';
+	
 
 }
 
