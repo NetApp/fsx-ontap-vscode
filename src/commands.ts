@@ -109,13 +109,15 @@ export async function sshToFileSystem(item: any) {
     await SSHService.sshToFileSystem(item.id, item.name, item.region, item.fs.OntapConfiguration.Endpoints.Management.IpAddresses[0]);
 }
 
-export async function addOntapLoginDetails(fileSystem: any)  {
+
+export async function addOntapLoginDetails(fileSystem: any, refreshFunc: () => void)  {
     try{
         const connectionDetails = await SSHService.promptForConnectionDetails(fileSystem.fs.OntapConfiguration.Endpoints.Management.DNSName ,
          fileSystem.id, fileSystem.fs.OntapConfiguration.Endpoints.Management.IpAddresses[0], true);
         await executeOntapCommands(fileSystem.fs, ['volume show'], connectionDetails);
         await state.context.secrets.store(`sshKey-${fileSystem.id}-${fileSystem.region}`, JSON.stringify(connectionDetails));
         vscode.window.showInformationMessage(`ONTAP login details for file system ${fileSystem.id} added successfully.`);
+        refreshFunc();
     } catch (error: any) {
         vscode.window.showErrorMessage(`Error adding ONTAP login details: ${error.message}`);   
     }

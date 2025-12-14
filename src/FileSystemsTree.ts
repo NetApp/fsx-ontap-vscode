@@ -52,11 +52,13 @@ export class FileSystemsTree implements vscode.TreeDataProvider<vscode.TreeItem>
         } else {
             if(element.contextValue === 'region') {
                 const fileSystems = await listFileSystems(element.id || 'us-east-1');
-                return fileSystems.map(fs => {
+                return Promise.all(fileSystems.map(async fs => {
                     const name = fs.Tags?.find(tag => tag.Key === 'Name')?.Value || fs.FileSystemId;
-                    const fsItem = new FileSystemsItem(name || '', fs.FileSystemId || '', fs, element.id || 'us-east-1', vscode.TreeItemCollapsibleState.Collapsed);
+                    const sshInfoStr = await state.context.secrets.get(`sshKey-${fs.FileSystemId}-${element.id || 'us-east-1'}`);
+                    const fsItem = new FileSystemsItem(name || '', fs.FileSystemId || '', fs, element.id || 'us-east-1',
+                         vscode.TreeItemCollapsibleState.Collapsed, !!sshInfoStr);
                     return fsItem;
-                });
+                }));
             }
             if(element.contextValue === 'filesystem') {
                 const e = element as FileSystemsItem;
