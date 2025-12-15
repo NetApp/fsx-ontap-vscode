@@ -60,7 +60,7 @@ export class FileSystemsTree implements vscode.TreeDataProvider<vscode.TreeItem>
                     return fsItem;
                 }));
             }
-            if(element.contextValue === 'filesystem') {
+            if(element.contextValue === 'filesystem' || element.contextValue === 'filesystem-withLoginDetails') {
                 const e = element as FileSystemsItem;
                 const items: vscode.TreeItem[] = [];
                 const svms = await listSvms(element.id || '', e.region);
