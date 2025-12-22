@@ -16,9 +16,9 @@ export interface Model {
 
 
 export async function getModel(token: vscode.CancellationToken): Promise<Model> {
-    const bedrockModel = vscode.workspace.getConfiguration('netapp-fsx-ontap').get('bedrockmodel',"");
-    if (bedrockModel) {
-        const model = new BedrockModel(bedrockModel as string);
+    const inference = vscode.workspace.getConfiguration('netapp-fsx-ontap').get('inferenceArn',"");
+    if (inference) {
+        const model = new BedrockModel(inference as string);
         await model.init();
         return model;
     } else {

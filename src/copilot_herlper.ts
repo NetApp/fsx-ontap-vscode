@@ -96,8 +96,18 @@ export async function handleChatRequest(
         } else {
             state.reporter.sendTelemetryEvent(copilot_question, { prompt: request.prompt });
             stream.progress('processing request...');
-            const ent = await model.sendMessage('You are an AWS FSX ONTAP expert. From the user prompt please return as a json string array without the ```json``` that I can parse which of the below entities are asked from the user, can be one or more : filesystems, volumes, svms, backups'
-                 + " if you see that there is a need for filesystems and volumes and also svms" + "\n" + request.prompt, { role: 'assistant' });
+            const ent = await model.sendMessage(`
+                You are an AWS FSX ONTAP expert.
+                From the user prompt please return as a json string array without the \`\`\`json\`\`\` that I can parse which of the below entities are asked from the user, can be one or more : filesystems, volumes, svms, backups
+                good response: ["filesystems","volumes"]
+                bad response: \`\`\`json
+                ['filesystems','volumes']
+                json\`\`\`
+                bad response: \`\`\`
+                ['filesystems','volumes']
+                \`\`\`
+                If you see that there is a need for filesystems and volumes and also svms
+                ${request.prompt}`, { role: 'assistant' });
             
             const entities: string[] = JSON.parse(ent);
             const fsMetrics: string[] = [];

@@ -9,16 +9,20 @@ export class BedrockModel implements Model {
     temperature = 0.7;
     maxTokens = 4096;
    
-    constructor(private modelName: string) {}
+    constructor(private inferenceArn: string) {}
 
     async init(): Promise<void> {
         const bedrockRegion = vscode.workspace.getConfiguration('netapp-fsx-ontap').get('bedrockregion',"us-east-1");
+        // Basic validation: expect an ARN string for inference
+        if (!this.inferenceArn || typeof this.inferenceArn !== 'string' || !this.inferenceArn.startsWith('arn:')) {
+            throw new Error('Bedrock inference ARN is missing or invalid.');
+        }
         try {
             this.client = new BedrockRuntimeClient({
                 region: bedrockRegion as string,
                 profile: state.currentProfile
             });
-            console.log(`Initialized Bedrock client for model: ${this.modelName} in region: ${bedrockRegion}`);
+            console.log(`Initialized Bedrock client for inference ARN: ${this.inferenceArn} in region: ${bedrockRegion}`);
         } catch (error) {
             console.error("Failed to initialize Bedrock client:", error);
             throw error;
@@ -33,7 +37,8 @@ export class BedrockModel implements Model {
         }];
 
         const command = new ConverseCommand({
-            modelId: this.modelName,
+            // Use the Bedrock inference ARN directly
+            modelId: this.inferenceArn,
             messages: content,
             
             inferenceConfig: {
