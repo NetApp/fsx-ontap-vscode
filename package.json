@@ -5,14 +5,15 @@
     "url": "https://github.com/NetApp/fsx-ontap-vscode.git"
   },
   "displayName": "NetApp FSx ONTAP",
-  "description": "",
+  "description": "Manage Amazon Fsx for ONTAP file systems from VScode",
   "version": "1.0.6",
   "engines": {
     "vscode": "^1.102.0"
   },
   "categories": [
     "Chat",
-    "Other"
+    "Other",
+    "Visualization"
   ],
   "keywords": [
     "netapp",
@@ -20,7 +21,8 @@
     "fsx",
     "aws",
     "storage",
-    "automation"
+    "automation",
+    "visualization"
   ],
   "icon": "resources/fsxn.png",
   "company": "NetApp",
@@ -39,10 +41,10 @@
           "default": "",
           "description": "Company name"
         },
-        "netapp-fsx-ontap.bedrockmodel": {
+        "netapp-fsx-ontap.inferenceArn": {
           "type": "string",
           "default": "",
-          "description": "Bedrock model"
+          "description": "Bedrock inference ARN"
         },
         "netapp-fsx-ontap.bedrockregion": {
           "type": "string",
