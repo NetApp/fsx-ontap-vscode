@@ -6,6 +6,7 @@ import { keys } from 'lodash';
 import path from 'path';
 import { FsxTelemetryReporter } from './telemetryReporter';
 import { isSsoProfile } from './awsSsoHelper';
+import { Logger, LogLevel } from './logger';
 
 export type Profile = {
     profileName: string;
@@ -74,6 +75,9 @@ class State {
         // Merge and deduplicate profile names
         const allProfileKeys = Array.from(new Set([...configFileKeys, ...credentialsFileKeys]));
         
+        Logger.log(`Loaded profiles from config file: ${configFileKeys.join(', ')}`, LogLevel.Info);
+        Logger.log(`Loaded profiles from credentials file: ${credentialsFileKeys.join(', ')}`, LogLevel.Info);
+        Logger.log(`All profiles: ${allProfileKeys.join(', ')}`, LogLevel.Info);
         console.log('Loaded profiles from config file:', configFileKeys);
         console.log('Loaded profiles from credentials file:', credentialsFileKeys);
         console.log('All profiles:', allProfileKeys);
@@ -108,6 +112,7 @@ class State {
             const regions = JSON.parse(data);
             this.availableRegions = regions.regions;
         } catch (error) {
+            Logger.log('Error reading regions file:', LogLevel.Error, error as Error);
             console.error('Error reading regions file:', error);
             this.availableRegions = {};
         }

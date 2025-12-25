@@ -2,6 +2,7 @@ import { BedrockRuntimeClient, ConversationRole, ConverseCommand } from "@aws-sd
 import { MessageType, Model } from "../modelFactory";
 import * as vscode from 'vscode';
 import { state } from "../../state";
+import { Logger, LogLevel } from "../../logger";
 
 export class BedrockModel implements Model {
     type: string = "bedrock";
@@ -15,6 +16,7 @@ export class BedrockModel implements Model {
         const bedrockRegion = vscode.workspace.getConfiguration('netapp-fsx-ontap').get('bedrockregion',"us-east-1");
         // Basic validation: expect an ARN string for inference
         if (!this.inferenceArn || typeof this.inferenceArn !== 'string' || !this.inferenceArn.startsWith('arn:')) {
+            Logger.log('Bedrock inference ARN is missing or invalid.', LogLevel.Error);
             throw new Error('Bedrock inference ARN is missing or invalid.');
         }
         try {
@@ -22,9 +24,11 @@ export class BedrockModel implements Model {
                 region: bedrockRegion as string,
                 profile: state.currentProfile
             });
+            Logger.log(`Initialized Bedrock client for inference ARN: ${this.inferenceArn} in region: ${bedrockRegion}`, LogLevel.Info);
             console.log(`Initialized Bedrock client for inference ARN: ${this.inferenceArn} in region: ${bedrockRegion}`);
         } catch (error) {
             console.error("Failed to initialize Bedrock client:", error);
+            Logger.log('Failed to initialize Bedrock client.', LogLevel.Error, error as Error);
             throw error;
         }
         
@@ -48,6 +52,7 @@ export class BedrockModel implements Model {
         });
 
         if(!this.client) {
+            Logger.log('Bedrock client not initialized.', LogLevel.Error);
             throw new Error("Bedrock client not initialized");
         }
 

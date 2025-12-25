@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import { MessageType, Model } from "../modelFactory";
+import { Logger, LogLevel } from '../../logger';
 
 
 export class CopilotModel implements Model {
@@ -18,6 +19,7 @@ export class CopilotModel implements Model {
                 await model.sendRequest([testMessage], {}, new vscode.CancellationTokenSource().token);
                 return model;
             } catch (error) {
+                Logger.log(`Model ${model.vendor}/${model.name} failed test: ${(error as Error).message}`, LogLevel.Warning, error as Error);
                 console.warn(`Model ${model.vendor}/${model.name} failed test:`, error);
                 continue;
             }
@@ -28,6 +30,7 @@ export class CopilotModel implements Model {
 
     async init(): Promise<void> {
         this.chatModel = await this.getWorkingLanguageModel();
+        Logger.log(`Using language model: ${this.chatModel?.vendor}/${this.chatModel?.name}`, LogLevel.Info);
         console.log(`Using language model: ${this.chatModel?.vendor}/${this.chatModel?.name}`);
     }
 

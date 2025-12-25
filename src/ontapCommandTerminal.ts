@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import { spawn, ChildProcessWithoutNullStreams } from 'child_process';
+import { Logger, LogLevel } from './logger';
 
 class OntapCommandTerminal implements vscode.Pseudoterminal {
    private writeEmitter = new vscode.EventEmitter<string>();
@@ -18,15 +19,14 @@ class OntapCommandTerminal implements vscode.Pseudoterminal {
 
         this.sshProcess.stdout.on('data', (data) => {
             this.writeEmitter.fire(data.toString());
-            console.log(`SSH stdout: ${data.toString()}`);
-        });
+            Logger.log(`SSH stdout: ${data.toString()}`, LogLevel.Info);        });
         this.sshProcess.stderr.on('data', (data) => {
             this.writeEmitter.fire(data.toString());
-            console.error(`SSH stderr: ${data.toString()}`);
+            Logger.log(`SSH stderr: ${data.toString()}`, LogLevel.Error);
         });
         this.sshProcess.on('close', () => {
             this.closeEmitter.fire();
-            console.log('SSH process closed');
+            Logger.log('SSH process closed', LogLevel.Info);
         });
 
     }

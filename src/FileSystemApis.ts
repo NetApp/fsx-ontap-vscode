@@ -2,6 +2,7 @@ import { CreateStorageVirtualMachineCommand, CreateVolumeCommand, FileSystem, FS
 import {CloudWatchClient, GetMetricDataCommand, GetMetricStatisticsCommand, GetMetricStatisticsCommandInput, ListMetricsCommand} from "@aws-sdk/client-cloudwatch";
 import { state } from "./state";
 import { create_svm_failure, create_svm_success, create_volume_failure, create_volume_success } from "./telemetryReporter";
+import { Logger, LogLevel } from "./logger";
 
 export const FileSystemMetrics = ['NetworkThroughputUtilization', 'NetworkSentBytes', 'NetworkReceivedBytes', 'DataReadBytes', 'DataWriteBytes',
                             'DataReadOperations', 'DataWriteOperations', 'MetadataOperations', 'DataReadOperationTime', 'DataWriteOperationTime',
@@ -148,6 +149,7 @@ export async function addSvm(fileSystemId: string, name: string, region: string)
         state.reporter.sendTelemetryEvent(create_svm_success, { region, fileSystemId });
         return res;
     } catch (error) {
+        Logger.log(`Error creating SVM: ${(error as Error).message}`, LogLevel.Error, error as Error);
         console.error("Error creating SVM:", error);
         state.reporter.sendTelemetryEvent(create_svm_failure, { region, fileSystemId, error: (error as Error).message });
         throw error;
@@ -175,6 +177,7 @@ export async function addVolume(svmId: string, name: string, sizeInMB: number, r
         state.reporter.sendTelemetryEvent(create_volume_success, { region, svmId, sizeInMB: sizeInMB.toString() });
         return res;
     } catch (error) {
+        Logger.log(`Error creating volume: ${(error as Error).message}`, LogLevel.Error, error as Error);
         console.error("Error creating volume:", error);
         state.reporter.sendTelemetryEvent(create_volume_failure, { region, svmId, sizeInMB: sizeInMB.toString(), error: (error as Error).message });
         throw error;

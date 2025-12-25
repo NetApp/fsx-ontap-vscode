@@ -4,6 +4,7 @@
 import * as vscode from 'vscode';
 import axios from 'axios';
 import * as crypto from 'crypto';
+import { Logger, LogLevel } from './logger';
 
 export class TelemetryExternalReporter {
 
@@ -37,6 +38,7 @@ export class TelemetryExternalReporter {
             },
             data: body
         }).catch((error) => {
+            Logger.log(`Failed to send telemetry event ${eventName}: ${error}`, LogLevel.Error, error as Error);
             console.warn(`Failed to send telemetry event ${eventName}: ${error}`);     
         });
     }

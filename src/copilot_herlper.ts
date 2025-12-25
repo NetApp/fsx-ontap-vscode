@@ -4,6 +4,7 @@ import { executeOntapCommands, OntapExecutorResult } from './ontap_executor';
 import { state } from './state';
 import { copilot_filesystem_question, copilot_question } from './telemetryReporter';
 import { getModel } from './chat/modelFactory';
+import { Logger, LogLevel } from './logger';
 
 
 
@@ -117,6 +118,7 @@ export async function handleChatRequest(
                 try {
                     fsMetrics.push(...JSON.parse(fsmet).filter((met: string) => FileSystemMetrics.includes(met)));
                 } catch (error) {
+                    Logger.log('Error parsing filesystem metrics.', LogLevel.Error, error as Error);
                     console.error('Error parsing filesystem metrics:', error);
                 }
                 
@@ -125,6 +127,7 @@ export async function handleChatRequest(
                 try {
                     volumeMetrics.push(...JSON.parse(vmet).filter((met: string) => VolumeMetrics.includes(met)));
                 } catch (error) {
+                    Logger.log('Error parsing volume metrics.', LogLevel.Error, error as Error);
                     console.error('Error parsing volume metrics:', error);
                 }
             }
@@ -178,6 +181,7 @@ export async function handleChatRequest(
 		
 
     } catch (error) {
+        Logger.log('Error handling chat request.', LogLevel.Error, error as Error);
         console.error('Error handling chat request:', error);
         stream.markdown(`Failed to process chat request with error: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }

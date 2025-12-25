@@ -2,6 +2,7 @@ import { loadSharedConfigFiles } from '@smithy/shared-ini-file-loader';
 import { spawn, ChildProcess } from 'child_process';
 import * as vscode from 'vscode';
 import { STSClient, GetCallerIdentityCommand } from "@aws-sdk/client-sts";
+import { Logger, LogLevel } from './logger';
 
 /**
  * Checks if a profile is an SSO profile by examining the config file
@@ -14,6 +15,7 @@ export async function isSsoProfile(profileName: string): Promise<boolean> {
         // SSO profiles have sso_start_url in their config
         return !!(profileConfig && 'sso_start_url' in profileConfig);
     } catch (error) {
+        Logger.log(`Error checking if profile ${profileName} is SSO: ${(error as Error).message}`, LogLevel.Error, error as Error);
         console.error(`Error checking if profile ${profileName} is SSO:`, error);
         return false;
     }
@@ -65,12 +67,14 @@ export async function performSsoLogin(profileName: string): Promise<{ success: b
         loginProcess.stdout?.on('data', (data: Buffer) => {
             const text = data.toString();
             output.push(text);
+            Logger.log(`AWS SSO login stdout: ${text}`, LogLevel.Info);
             console.log(`AWS SSO login stdout: ${text}`);
         });
 
         loginProcess.stderr?.on('data', (data: Buffer) => {
             const text = data.toString();
             errors.push(text);
+            Logger.log(`AWS SSO login stderr: ${text}`, LogLevel.Error);
             console.error(`AWS SSO login stderr: ${text}`);
         });
 
