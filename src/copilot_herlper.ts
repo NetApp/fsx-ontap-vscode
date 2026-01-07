@@ -6,6 +6,76 @@ import { copilot_filesystem_question, copilot_question } from './telemetryReport
 import { getModel } from './chat/modelFactory';
 import { Logger, LogLevel } from './logger';
 
+/**
+ * Parses a comma-separated list from model responses.
+ * Handles various formats: "item1,item2", "item1, item2", "item1\nitem2", etc.
+ * 
+ * @param response - The raw response from the model
+ * @returns Array of trimmed strings
+ */
+function parseCommaSeparatedList(response: string): string[] {
+    if (!response || typeof response !== 'string') {
+        return [];
+    }
+
+    const trimmed = response.trim();
+    
+    // Remove markdown code blocks if present
+    const codeBlockRegex = /```(?:[\w]+)?\s*([\s\S]*?)```/;
+    const codeBlockMatch = trimmed.match(codeBlockRegex);
+    const content = codeBlockMatch ? codeBlockMatch[1] : trimmed;
+    
+    // Split by comma or newline, filter empty strings, and trim
+    return content
+        .split(/[,\n]/)
+        .map(item => item.trim())
+        .filter(item => item.length > 0);
+}
+
+/**
+ * Parses CLI commands from model responses.
+ * Handles line-by-line format, numbered lists, or bullet points.
+ * 
+ * @param response - The raw response from the model
+ * @returns Array of command objects with 'command' property
+ */
+function parseCommands(response: string): Array<{ command: string }> {
+    if (!response || typeof response !== 'string') {
+        return [];
+    }
+
+    const trimmed = response.trim();
+    
+    // Remove markdown code blocks if present
+    const codeBlockRegex = /```(?:[\w]+)?\s*([\s\S]*?)```/;
+    const codeBlockMatch = trimmed.match(codeBlockRegex);
+    const content = codeBlockMatch ? codeBlockMatch[1] : trimmed;
+    
+    // Split by newlines
+    const lines = content.split('\n');
+    const commands: Array<{ command: string }> = [];
+    
+    for (const line of lines) {
+        const trimmedLine = line.trim();
+        if (!trimmedLine) {
+            continue;
+        }
+        
+        // Remove common prefixes: "1. ", "- ", "* ", "• ", etc.
+        const cleaned = trimmedLine
+            .replace(/^[\d]+\.\s*/, '')  // Remove "1. ", "2. ", etc.
+            .replace(/^[-*•]\s*/, '')     // Remove "- ", "* ", "• "
+            .replace(/^COMMAND:\s*/i, '')  // Remove "COMMAND: "
+            .trim();
+        
+        if (cleaned.length > 0) {
+            commands.push({ command: cleaned });
+        }
+    }
+    
+    return commands;
+}
+
 
 
 export async function handleChatRequest(
@@ -45,10 +115,10 @@ export async function handleChatRequest(
             };
             stream.markdown(`\nI understand that the user wants information about filesystem id: ${fileSystemId}\n`);
             
-            const clis = await model.sendMessage('You are a Netapp ONTAP master. Your job is to suggest which Netapp ONTAP CLI commands need to run in order to answer the user question. You can use https://docs.netapp.com/us-en/ontap-cli/ to get all the CLIs, use version 9.16.1. Return the result as JSON string array without the ```json``` in the format of [{"command": <cli command>}]. If in the prompt there is a filesystem id with the regex ^fs-[0-9a-f]{17}$, dont use it as a parameter in the CLI, not as a volume or anything.The suggested commands are not allowed to modify state only to show information. Dont suggest commands that has placeholder in the pattern of <> instead use * for all entities.' + "\n" + request.prompt, { role: 'assistant' });
+            const clis = await model.sendMessage('You are a Netapp ONTAP master. Your job is to suggest which Netapp ONTAP CLI commands need to run in order to answer the user question. You can use https://docs.netapp.com/us-en/ontap-cli/ to get all the CLIs, use version 9.16.1. Return ONLY the CLI commands, one per line, with no extra text, no numbering, no bullets, no markdown. Each line should be a single ONTAP CLI command. If in the prompt there is a filesystem id with the regex ^fs-[0-9a-f]{17}$, dont use it as a parameter in the CLI, not as a volume or anything. The suggested commands are not allowed to modify state only to show information. Dont suggest commands that has placeholder in the pattern of <> instead use * for all entities.' + "\n" + request.prompt, { role: 'assistant' });
             
             stream.markdown(`\nI understand that I need to run the following CLI commands:\n`);
-            const commands = JSON.parse(clis);
+            const commands = parseCommands(clis);
             for(const command of commands) {
                 stream.markdown(`-  **${command.command}**\n`);
             }
@@ -66,11 +136,11 @@ export async function handleChatRequest(
             const validResults = results.result.filter(r => r.success);
             if(errors) {
                 stream.markdown(`\nNote: Some commands failed to execute. Trying again...\n`);
-                const errclis = await model.sendMessage('You are a Netapp ONTAP master. Your job is to suggest which Netapp ONTAP CLI commands need to run in order to answer the user question. You can use https://docs.netapp.com/us-en/ontap-cli/ to get all the CLIs, use version 9.16.1. Return the result as JSON string array without the ```json``` in the format of [{"command": <cli command>}]. If in the prompt there is a filesystem id with the regex ^fs-[0-9a-f]{17}$, dont use it as a parameter in the CLI, not as a volume or anything.'
+                const errclis = await model.sendMessage('You are a Netapp ONTAP master. Your job is to suggest which Netapp ONTAP CLI commands need to run in order to answer the user question. You can use https://docs.netapp.com/us-en/ontap-cli/ to get all the CLIs, use version 9.16.1. Return ONLY the CLI commands, one per line, with no extra text, no numbering, no bullets, no markdown. Each line should be a single ONTAP CLI command. If in the prompt there is a filesystem id with the regex ^fs-[0-9a-f]{17}$, dont use it as a parameter in the CLI, not as a volume or anything.'
                      + `When I first asked you the question you gave me some commands which were wrong, please suggest the correct commands. Here are the wrong commands and their ONTAP errors ${JSON.stringify(errors)}` + "\n" + request.prompt, { role: 'assistant' });
                 
                 stream.markdown(`\nRunning the updated commands using the previous context:\n`);
-                const errcommands = JSON.parse(errclis);
+                const errcommands = parseCommands(errclis);
                 for(const command of errcommands) {
                     stream.markdown(`- ${command.command}\n`);
                 }
@@ -99,33 +169,31 @@ export async function handleChatRequest(
             stream.progress('processing request...');
             const ent = await model.sendMessage(`
                 You are an AWS FSX ONTAP expert.
-                From the user prompt please return as a json string array without the \`\`\`json\`\`\` that I can parse which of the below entities are asked from the user, can be one or more : filesystems, volumes, svms, backups
-                good response: ["filesystems","volumes"]
-                bad response: \`\`\`json
-                ['filesystems','volumes']
-                json\`\`\`
-                bad response: \`\`\`
-                ['filesystems','volumes']
-                \`\`\`
-                If you see that there is a need for filesystems and volumes and also svms
+                From the user prompt please return ONLY a comma-separated list (no extra text, no markdown) of which entities are asked from the user. Can be one or more: filesystems, volumes, svms, backups
+                Example good response: filesystems,volumes
+                Example good response: filesystems
+                Example good response: filesystems,volumes,svms
+                Return only the entity names separated by commas, nothing else.
                 ${request.prompt}`, { role: 'assistant' });
             
-            const entities: string[] = JSON.parse(ent);
+            const entities: string[] = parseCommaSeparatedList(ent);
             const fsMetrics: string[] = [];
             const volumeMetrics: string[] = [];
             if(entities.length > 0) {
-                const fsmet = await model.sendMessage('You are an AWS FSX ONTAP expert. From the user prompt advise if there is a need to query cloudwatch metrics for the filesystems. If so return it only as as a json string array without the ```json``` that I can parse which of the below filesystem metrics are asked from the user, can be one or more : ' + FileSystemMetrics.join(', ') + " use this url for more information https://docs.aws.amazon.com/fsx/latest/ONTAPGuide/file-system-metrics.html" + "\n" + request.prompt, { role: 'assistant' });
+                const fsmet = await model.sendMessage('You are an AWS FSX ONTAP expert. From the user prompt advise if there is a need to query cloudwatch metrics for the filesystems. If so return ONLY a comma-separated list (no extra text, no markdown) of which filesystem metrics are asked from the user, can be one or more. Available metrics: ' + FileSystemMetrics.join(', ') + " use this url for more information https://docs.aws.amazon.com/fsx/latest/ONTAPGuide/file-system-metrics.html. If no metrics are needed, return empty. Return only the metric names separated by commas, nothing else." + "\n" + request.prompt, { role: 'assistant' });
                 try {
-                    fsMetrics.push(...JSON.parse(fsmet).filter((met: string) => FileSystemMetrics.includes(met)));
+                    const parsed = parseCommaSeparatedList(fsmet);
+                    fsMetrics.push(...parsed.filter((met: string) => FileSystemMetrics.includes(met)));
                 } catch (error) {
                     Logger.log('Error parsing filesystem metrics.', LogLevel.Error, error as Error);
                     console.error('Error parsing filesystem metrics:', error);
                 }
                 
 
-                const vmet = await model.sendMessage('You are an AWS FSX ONTAP expert. From the user prompt advise if there is a need to query cloudwatch metrics for the filesystem volumes. If so return response that contains it only as as a json string array without the ```json``` that I can parse which of the below volume metrics are asked from the user, can be one or more : ' + VolumeMetrics.join(', ') + " use this url for more information https://docs.aws.amazon.com/fsx/latest/ONTAPGuide/volume-metrics.html" + "\n" + request.prompt, { role: 'assistant' });
+                const vmet = await model.sendMessage('You are an AWS FSX ONTAP expert. From the user prompt advise if there is a need to query cloudwatch metrics for the filesystem volumes. If so return ONLY a comma-separated list (no extra text, no markdown) of which volume metrics are asked from the user, can be one or more. Available metrics: ' + VolumeMetrics.join(', ') + " use this url for more information https://docs.aws.amazon.com/fsx/latest/ONTAPGuide/volume-metrics.html. If no metrics are needed, return empty. Return only the metric names separated by commas, nothing else." + "\n" + request.prompt, { role: 'assistant' });
                 try {
-                    volumeMetrics.push(...JSON.parse(vmet).filter((met: string) => VolumeMetrics.includes(met)));
+                    const parsed = parseCommaSeparatedList(vmet);
+                    volumeMetrics.push(...parsed.filter((met: string) => VolumeMetrics.includes(met)));
                 } catch (error) {
                     Logger.log('Error parsing volume metrics.', LogLevel.Error, error as Error);
                     console.error('Error parsing volume metrics:', error);
