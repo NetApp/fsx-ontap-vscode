@@ -14,6 +14,8 @@ export const ssh_to_fs = 'ssh-to-fs';
 export const create_snapshot_success = 'create-snapshot-success';
 export const create_snapshot_failure = 'create-snapshot-failure';
 export const select_profile = 'select-profile';
+export const extension_activated = 'extension-activated';
+export const extension_deactivated = 'extension-deactivated';
 
 export class FsxTelemetryReporter {
 
@@ -44,7 +46,7 @@ export class FsxTelemetryReporter {
         }
     }
 
-    public sendTelemetryEvent(eventName: string, properties?: { [key: string]: string }, measurements?: { [key: string]: number }) {
+    public sendTelemetryEvent(eventName: string, properties?: { [key: string]: string  }, measurements?: { [key: string]: number }) {
         if (!this.telemetryEnabled || !this.reporter) {
             // Optionally log to console in development
             if (process.env.NODE_ENV === 'development') {

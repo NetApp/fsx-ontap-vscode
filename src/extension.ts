@@ -7,9 +7,10 @@ import { FileSystemsTree } from './FileSystemsTree';
 import { SimpleScriptCreator } from './SimpleScriptCreator';
 import { handleChatRequest } from './copilot_herlper';
 import { WelcomeEditor } from './WelcomeEditor';
-import { SSHService } from './sshService';
 import { Logger } from './logger';
+import { extension_activated, extension_deactivated } from './telemetryReporter';
 
+let activationTime: number = 0;
 // This method is called when your extension is activated
 // Your extension is activated the very first time the command is executed
 export async function activate(context: vscode.ExtensionContext) {
@@ -18,6 +19,7 @@ export async function activate(context: vscode.ExtensionContext) {
 	// This line of code will only be executed once when your extension is activated
 	console.log('Congratulations, your extension "netapp-fsx-ontap" is now active!');
 	Logger.log('Extension activated.');
+	activationTime = Date.now();
 	await state.init(context);
 	
 	// Show welcome screen on first activation
@@ -134,8 +136,15 @@ export async function activate(context: vscode.ExtensionContext) {
 		registerUpdateOntapLoginDetailsCommand
 	);
 
-
+	state.reporter.sendTelemetryEvent(extension_activated, { });
 }
 
 // This method is called when your extension is deactivated
-export function deactivate() { }
+export function deactivate() { 
+	Logger.log('Extension deactivated.');
+	const activeDurationSeconds = activationTime ? Math.round((Date.now() - activationTime) / 1000) : 0;
+	state.reporter.sendTelemetryEvent(extension_deactivated, { 
+		activeDurationFormatted: `${Math.floor(activeDurationSeconds / 60)}m ${activeDurationSeconds % 60}s`,
+		activeDurationSeconds: activeDurationSeconds.toString(),
+	 });
+}
