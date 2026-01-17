@@ -1,7 +1,7 @@
 // The module 'vscode' contains the VS Code extensibility API
 // Import the module and reference it with the alias vscode in your code below
 import * as vscode from 'vscode';
-import { addOntapLoginDetails, addSvmCommand, createSnapshot, createVolume, selectProfile, selectRegion, sshToFileSystem } from './commands';
+import { addOntapLoginDetails, addSvmCommand, createSnapshot, createVolume, openCredentialsManager, selectProfile, selectRegion, sshToFileSystem } from './commands';
 import { state } from './state';
 import { FileSystemsTree } from './FileSystemsTree';
 import { SimpleScriptCreator } from './SimpleScriptCreator';
@@ -110,6 +110,10 @@ export async function activate(context: vscode.ExtensionContext) {
 	const registerUpdateOntapLoginDetailsCommand = vscode.commands.registerCommand('netapp-fsx-ontap.update-ontap-login-details', async (filesystem: any) => {
 		await addOntapLoginDetails(filesystem, () => treeDataProvider.refresh());
 	});
+
+	const manageCredentialsCommand = vscode.commands.registerCommand('netapp-fsx-ontap.manage-credentials', () => {
+		openCredentialsManager(context);
+	});
 	
 	const chatParticipant = vscode.chat.createChatParticipant('netapp-fsx-ontap.helper', handleChatRequest);
 	chatParticipant.iconPath = vscode.Uri.file(context.asAbsolutePath('resources/chat.svg'));
@@ -133,7 +137,8 @@ export async function activate(context: vscode.ExtensionContext) {
 		showWelcomeCommand,
 		chatParticipant,
 		registerOntapLoginDetailsCommand,
-		registerUpdateOntapLoginDetailsCommand
+		registerUpdateOntapLoginDetailsCommand,
+		manageCredentialsCommand
 	);
 
 	state.reporter.sendTelemetryEvent(extension_activated, { });

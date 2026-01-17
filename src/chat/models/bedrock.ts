@@ -22,7 +22,7 @@ export class BedrockModel implements Model {
         try {
             this.client = new BedrockRuntimeClient({
                 region: bedrockRegion as string,
-                profile: state.currentProfile
+                credentials: { accessKeyId: state.currentAccessKeyId, secretAccessKey: state.currentSecretAccessKey }
             });
             Logger.log(`Initialized Bedrock client for inference ARN: ${this.inferenceArn} in region: ${bedrockRegion}`, LogLevel.Info);
             console.log(`Initialized Bedrock client for inference ARN: ${this.inferenceArn} in region: ${bedrockRegion}`);

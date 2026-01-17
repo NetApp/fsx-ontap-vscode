@@ -6,7 +6,7 @@
   },
   "displayName": "NetApp FSx ONTAP",
   "description": "Manage Amazon Fsx for ONTAP file systems from VScode",
-  "version": "1.0.7",
+  "version": "1.0.8",
   "engines": {
     "vscode": "^1.102.0"
   },
@@ -93,12 +93,6 @@
         "icon": "$(refresh)"
       },
       {
-        "command": "netapp-fsx-ontap.aws-login",
-        "title": "AWS Login",
-        "icon": "$(key)",
-        "category": "NetApp FSx ONTAP"
-      },
-      {
         "command": "netapp-fsx-ontap.show-filesystem-cf-creation",
         "title": "Show FileSystem CloudFormation Creation"
       },
@@ -181,17 +175,18 @@
         "title": "Create Snapshot",
         "category": "NetApp FSx ONTAP",
         "icon": "$(device-camera)"
+      },
+      {
+        "command": "netapp-fsx-ontap.manage-credentials",
+        "title": "Manage AWS Credentials",
+        "category": "NetApp FSx ONTAP",
+        "icon": "$(key)"
       }
     ],
     "menus": {
       "view/title": [
         {
           "command": "netapp-fsx-ontap.showWelcome",
-          "group": "navigation",
-          "when": "view == netapp-fsx-ontap.tree"
-        },
-        {
-          "command": "netapp-fsx-ontap.aws-login",
           "group": "navigation",
           "when": "view == netapp-fsx-ontap.tree"
         },
@@ -204,12 +199,17 @@
           "command": "netapp-fsx-ontap.refresh",
           "group": "navigation",
           "when": "view == netapp-fsx-ontap.tree"
+        },
+        {
+          "command": "netapp-fsx-ontap.manage-credentials",
+          "group": "navigation",
+          "when": "view == netapp-fsx-ontap.tree"
         }
       ],
       "view/item/context": [
         {
           "command": "netapp-fsx-ontap.addSvm-terraform",
-          "when": "viewItem == filesystem",
+          "when": "viewItem == filesystem || viewItem == filesystem-withLoginDetails",
           "group": "navigation"
         },
         {

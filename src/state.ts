@@ -1,17 +1,15 @@
-import { loadSharedConfigFiles } from '@smithy/shared-ini-file-loader';
+
 import { STSClient, GetCallerIdentityCommand } from "@aws-sdk/client-sts";
 import * as vscode from 'vscode';
 import * as fs from 'fs';
-import { keys } from 'lodash';
 import path from 'path';
 import { FsxTelemetryReporter } from './telemetryReporter';
-import { isSsoProfile } from './awsSsoHelper';
 import { Logger, LogLevel } from './logger';
+import { readAwsCredentialsFile } from './awsCredentialsFileManager';
 
 export type Profile = {
     profileName: string;
     error? : string;
-    isSso?: boolean;
 }
 
 class State {
@@ -22,11 +20,16 @@ class State {
     readonly onDidChangeRegions = new vscode.EventEmitter<void>();
     readonly onDidChangeRegionsEvent = this.onDidChangeRegions.event;
 
+    readonly onDidChangeProfiles = new vscode.EventEmitter<void>();
+    readonly onDidChangeProfilesEvent = this.onDidChangeProfiles.event;
+
     private selectedRegions: string[] = [];
     public context: vscode.ExtensionContext = {} as vscode.ExtensionContext;
     availableRegions: { [key: string]: { description: string } } = {};
     profiles: Profile[] = [];
     currentProfile: string = '';
+    currentAccessKeyId: string = '';
+    currentSecretAccessKey: string = '';
     userId: string = '';
     sessionId: string = crypto.randomUUID();
     reporter = new FsxTelemetryReporter();
@@ -66,41 +69,113 @@ class State {
 
     async loadProfiles() {
         this.profiles = [];
-        const configFiles = await loadSharedConfigFiles();
+        const profiles = readAwsCredentialsFile();
         
-        // Get profiles from both config file (where SSO profiles are) and credentials file
-        const configFileKeys = keys(configFiles.configFile || {});
-        const credentialsFileKeys = keys(configFiles.credentialsFile || {});
+        // Get profiles from both config file and credentials file
+        const credentialsFileKeys = (profiles|| {}).keys();
         
         // Merge and deduplicate profile names
-        const allProfileKeys = Array.from(new Set([...configFileKeys, ...credentialsFileKeys]));
+        const allProfileKeys = Array.from(credentialsFileKeys);
         
-        Logger.log(`Loaded profiles from config file: ${configFileKeys.join(', ')}`, LogLevel.Info);
-        Logger.log(`Loaded profiles from credentials file: ${credentialsFileKeys.join(', ')}`, LogLevel.Info);
         Logger.log(`All profiles: ${allProfileKeys.join(', ')}`, LogLevel.Info);
-        console.log('Loaded profiles from config file:', configFileKeys);
-        console.log('Loaded profiles from credentials file:', credentialsFileKeys);
         console.log('All profiles:', allProfileKeys);
         
         await this.checkProfiles(allProfileKeys);
-        const hasValidDefault = this.profiles.find(profile => profile.profileName === 'default' && !profile.error);
-        if (hasValidDefault) {
-            this.currentProfile = hasValidDefault.profileName;
+        
+        // Try to load saved profile from configuration
+        const savedProfile = this.context.globalState.get<string>('fsx-ontap-selected-profile', '');
+        
+        if (savedProfile) {
+            // Check if saved profile exists and is valid
+            const savedProfileInfo = this.profiles.find(p => p.profileName === savedProfile);
+            if (savedProfileInfo && !savedProfileInfo.error) {
+                this.setCurrentProfile(savedProfile);
+                Logger.log(`Restored saved profile: ${savedProfile}`, LogLevel.Info);
+            } else {
+                // Saved profile is invalid or doesn't exist, clear it
+                Logger.log(`Saved profile "${savedProfile}" is invalid or doesn't exist, clearing it`, LogLevel.Info);
+                this.context.globalState.update('fsx-ontap-selected-profile', undefined);
+                this.setCurrentProfile('');
+            }
         }
+        
+        // If no profile is set, try to use the first valid profile
+        if (!this.currentProfile) {
+            const firstValidProfile = this.profiles.find(profile => !profile.error);
+            if (firstValidProfile) {
+                this.setCurrentProfile(firstValidProfile.profileName);
+                // Save it for next time
+                this.context.globalState.update('fsx-ontap-selected-profile', this.currentProfile);
+                Logger.log(`Using first valid profile: ${this.currentProfile}`, LogLevel.Info);
+            } else {
+                // Fallback to 'default' if it exists and is valid
+                const hasValidDefault = this.profiles.find(profile => profile.profileName === 'default' && !profile.error);
+                if (hasValidDefault) {
+                    this.setCurrentProfile(hasValidDefault.profileName);
+                    this.context.globalState.update('fsx-ontap-selected-profile', this.currentProfile);
+                }
+            }
+        }
+        
+        // Fire profile change event
+        this.onDidChangeProfiles.fire();
+    }
+    
+    setCurrentProfile(profileName: string) {
+        this.currentProfile = profileName;
+        const credentialsSections = readAwsCredentialsFile();
+        const profileSection = credentialsSections.get(profileName);
+        if (!profileSection) {
+            this.currentAccessKeyId = '';
+            this.currentSecretAccessKey = '';
+            return;
+        }
+        this.currentAccessKeyId = profileSection.get('aws_access_key_id') || '';
+        this.currentSecretAccessKey = profileSection.get('aws_secret_access_key') || '';
+        // Save to configuration
+        if (this.context && this.context.globalState) {
+            this.context.globalState.update('fsx-ontap-selected-profile', profileName);
+            Logger.log(`Saved selected profile to configuration: ${profileName}`, LogLevel.Info);
+        }
+        this.onDidChangeActiveProfile.fire(profileName);
     }
 
     private async checkProfiles(profiles: string[]) {
+        // Read credentials file directly to bypass AWS SDK credential provider cache
+        const credentialsSections = readAwsCredentialsFile();
         
         for (const profile of profiles) {
             try {
-                const isSso = await isSsoProfile(profile);
-                const stsClient = new STSClient({ region: "us-east-1", profile: profile });
+                // Get credentials directly from the file to bypass SDK caching
+                const profileSection = credentialsSections.get(profile);
+                if (!profileSection) {
+                    // Profile not found in credentials file
+                    this.profiles.push({ profileName: profile, error: 'Profile not found in credentials file' });
+                    continue;
+                }
+                
+                const accessKeyId = profileSection.get('aws_access_key_id');
+                const secretAccessKey = profileSection.get('aws_secret_access_key');
+                
+                if (!accessKeyId || !secretAccessKey) {
+                    this.profiles.push({ profileName: profile, error: 'Missing access key ID or secret access key' });
+                    continue;
+                }
+                
+                // Use explicit credentials to bypass credential provider cache
+                const stsClient = new STSClient({
+                    region: "us-east-1",
+                    credentials: {
+                        accessKeyId: accessKeyId,
+                        secretAccessKey: secretAccessKey
+                    }
+                });
+                
                 const command = new GetCallerIdentityCommand({});
                 await stsClient.send(command);
-                this.profiles.push({ profileName: profile, isSso });
+                this.profiles.push({ profileName: profile });
             } catch (error) {
-                const isSso = await isSsoProfile(profile);
-                this.profiles.push({ profileName: profile, error: (error as Error).message, isSso });
+                this.profiles.push({ profileName: profile, error: (error as Error).message });
             }
         }
 

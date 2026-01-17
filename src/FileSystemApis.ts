@@ -19,7 +19,7 @@ export const VolumeMetrics = ['DataReadBytes', 'DataWriteBytes', 'DataReadOperat
 ];
 
 export async function listFileSystems(region: string): Promise<FileSystem[]> {
-    const client = new FSxClient({ region, profile: state.currentProfile });
+    const client = new FSxClient({ region, credentials: { accessKeyId: state.currentAccessKeyId, secretAccessKey: state.currentSecretAccessKey } });
     const fileSystems: FileSystem[] = [];
     for await (const page of paginateDescribeFileSystems({ client }, { MaxResults: 100 })) {
         if (page.FileSystems) {
@@ -31,7 +31,7 @@ export async function listFileSystems(region: string): Promise<FileSystem[]> {
 }
 
 export async function listAllSvms(region: string): Promise<StorageVirtualMachine[]> {
-    const client = new FSxClient({ region, profile: state.currentProfile });
+    const client = new FSxClient({ region, credentials: { accessKeyId: state.currentAccessKeyId, secretAccessKey: state.currentSecretAccessKey } });
     const svms: StorageVirtualMachine[] = [];
     for await (const page of paginateDescribeStorageVirtualMachines({ client }, { MaxResults: 100 })) {
         if (page.StorageVirtualMachines) {
@@ -43,7 +43,7 @@ export async function listAllSvms(region: string): Promise<StorageVirtualMachine
 
 
 export async function listSvms(fileSystemId: string, region: string): Promise<StorageVirtualMachine[]> {
-    const client = new FSxClient({ region, profile: state.currentProfile });
+    const client = new FSxClient({ region, credentials: { accessKeyId: state.currentAccessKeyId, secretAccessKey: state.currentSecretAccessKey } });
     const svms: StorageVirtualMachine[] = [];
     for await (const page of paginateDescribeStorageVirtualMachines({ client }, { MaxResults: 100, Filters: [{
         Name: 'file-system-id',
@@ -57,7 +57,7 @@ export async function listSvms(fileSystemId: string, region: string): Promise<St
 }
 
 export async function listAllVolumes(region: string): Promise<Volume[]> {
-    const client = new FSxClient({ region, profile: state.currentProfile });
+    const client = new FSxClient({ region, credentials: { accessKeyId: state.currentAccessKeyId, secretAccessKey: state.currentSecretAccessKey } });
     const volumes: Volume[] = [];
     for await (const page of paginateDescribeVolumes({ client }, { MaxResults: 100 })) {
         if (page.Volumes) {
@@ -68,7 +68,7 @@ export async function listAllVolumes(region: string): Promise<Volume[]> {
 }
 
 export async function listVolumes(svmId: string, fileSystemId: string, region: string): Promise<Volume[]> {
-    const client = new FSxClient({ region, profile: state.currentProfile });
+    const client = new FSxClient({ region, credentials: { accessKeyId: state.currentAccessKeyId, secretAccessKey: state.currentSecretAccessKey } });
     const volumes: Volume[] = [];
     for await (const page of paginateDescribeVolumes({ client }, { MaxResults: 100, Filters: [{
         Name: 'storage-virtual-machine-id',
@@ -85,7 +85,7 @@ export async function listVolumes(svmId: string, fileSystemId: string, region: s
 }
 
 export async function listBackups(region: string): Promise<any[]> {
-    const client = new FSxClient({ region, profile: state.currentProfile });
+    const client = new FSxClient({ region, credentials: { accessKeyId: state.currentAccessKeyId, secretAccessKey: state.currentSecretAccessKey } });
     const backups: any[] = [];
     for await (const page of paginateDescribeBackups({ client }, { MaxResults: 100 })) {
         if (page.Backups) {
@@ -97,7 +97,7 @@ export async function listBackups(region: string): Promise<any[]> {
 
 export async function getFileSystemMetrics(region: string, fsMetrics: string[], volMetrics: string[]): Promise<any> {
 
-    const client = new CloudWatchClient({ region, profile: state.currentProfile });
+    const client = new CloudWatchClient({ region, credentials: { accessKeyId: state.currentAccessKeyId, secretAccessKey: state.currentSecretAccessKey } });
     const results: Record<string, any[]> = {};
     for(const key of fsMetrics) {
 
@@ -139,7 +139,7 @@ export async function getFileSystemMetrics(region: string, fsMetrics: string[], 
 }
 
 export async function addSvm(fileSystemId: string, name: string, region: string) {
-    const client = new FSxClient({ region: region, profile: state.currentProfile });
+    const client = new FSxClient({ region: region, credentials: { accessKeyId: state.currentAccessKeyId, secretAccessKey: state.currentSecretAccessKey } });
     const command = new CreateStorageVirtualMachineCommand({
         FileSystemId: fileSystemId,
         Name: name
@@ -157,7 +157,7 @@ export async function addSvm(fileSystemId: string, name: string, region: string)
 }
 
 export async function addVolume(svmId: string, name: string, sizeInMB: number, region: string) {
-    const client = new FSxClient({ region: region, profile: state.currentProfile });
+    const client = new FSxClient({ region: region, credentials: { accessKeyId: state.currentAccessKeyId, secretAccessKey: state.currentSecretAccessKey } });
     const command = new CreateVolumeCommand({
         VolumeType: 'ONTAP',
         Name: name,
