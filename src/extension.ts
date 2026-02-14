@@ -1,9 +1,10 @@
 // The module 'vscode' contains the VS Code extensibility API
 // Import the module and reference it with the alias vscode in your code below
 import * as vscode from 'vscode';
-import { addOntapLoginDetails, addSvmCommand, createSnapshot, createVolume, openCredentialsManager, selectProfile, selectRegion, sshToFileSystem } from './commands';
+import { addOntapLoginDetails, addSvmCommand, createS3VolumeAccessPoint, createSnapshot, createVolume, openCredentialsManager, selectProfile, selectRegion, sshToFileSystem } from './commands';
 import { state } from './state';
 import { FileSystemsTree } from './FileSystemsTree';
+import { S3NextPageItem } from './TreeItems';
 import { SimpleScriptCreator } from './SimpleScriptCreator';
 import { handleChatRequest } from './copilot_herlper';
 import { WelcomeEditor } from './WelcomeEditor';
@@ -115,6 +116,14 @@ export async function activate(context: vscode.ExtensionContext) {
 		openCredentialsManager(context);
 	});
 	
+	const createS3VolumeAccessPointCommand = vscode.commands.registerCommand('netapp-fsx-ontap.create-s3-volume-access-point', async (volume: any) => {
+		await createS3VolumeAccessPoint(volume.id, volume.region, () => treeDataProvider.refresh());
+	});
+
+	const listS3ObjectsNextPageCommand = vscode.commands.registerCommand('netapp-fsx-ontap.list-s3-objects-next-page', async (nextPageItem: S3NextPageItem) => {
+		await treeDataProvider.loadNextPage(nextPageItem);
+	});
+
 	const chatParticipant = vscode.chat.createChatParticipant('netapp-fsx-ontap.helper', handleChatRequest);
 	chatParticipant.iconPath = vscode.Uri.file(context.asAbsolutePath('resources/chat.svg'));
 
@@ -138,7 +147,9 @@ export async function activate(context: vscode.ExtensionContext) {
 		chatParticipant,
 		registerOntapLoginDetailsCommand,
 		registerUpdateOntapLoginDetailsCommand,
-		manageCredentialsCommand
+		manageCredentialsCommand,
+		createS3VolumeAccessPointCommand,
+		listS3ObjectsNextPageCommand
 	);
 
 	state.reporter.sendTelemetryEvent(extension_activated, { });

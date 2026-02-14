@@ -1,7 +1,7 @@
-import { CreateStorageVirtualMachineCommand, CreateVolumeCommand, FileSystem, FSxClient, ListTagsForResourceCommand, paginateDescribeBackups, paginateDescribeFileSystems, paginateDescribeStorageVirtualMachines, paginateDescribeVolumes, StorageVirtualMachine, Volume } from "@aws-sdk/client-fsx";
+import { CreateAndAttachS3AccessPointCommand, CreateStorageVirtualMachineCommand, CreateVolumeCommand, FileSystem, FSxClient, ListTagsForResourceCommand, paginateDescribeBackups, paginateDescribeFileSystems, paginateDescribeS3AccessPointAttachments, paginateDescribeStorageVirtualMachines, paginateDescribeVolumes, S3AccessPointAttachment, StorageVirtualMachine, Volume } from "@aws-sdk/client-fsx";
 import {CloudWatchClient, GetMetricDataCommand, GetMetricStatisticsCommand, GetMetricStatisticsCommandInput, ListMetricsCommand} from "@aws-sdk/client-cloudwatch";
 import { state } from "./state";
-import { create_svm_failure, create_svm_success, create_volume_failure, create_volume_success } from "./telemetryReporter";
+import { create_s3_access_point_success, create_svm_failure, create_svm_success, create_volume_failure, create_volume_success } from "./telemetryReporter";
 import { Logger, LogLevel } from "./logger";
 
 export const FileSystemMetrics = ['NetworkThroughputUtilization', 'NetworkSentBytes', 'NetworkReceivedBytes', 'DataReadBytes', 'DataWriteBytes',
@@ -82,6 +82,20 @@ export async function listVolumes(svmId: string, fileSystemId: string, region: s
         }
     }
     return volumes;
+}
+
+export async function listVolumeAccessPoints(volumeId: string, region: string): Promise<S3AccessPointAttachment[]> {
+    const client = new FSxClient({ region, credentials: { accessKeyId: state.currentAccessKeyId, secretAccessKey: state.currentSecretAccessKey } });
+    const volumeAccessPoints: S3AccessPointAttachment[] = [];
+    for await (const page of paginateDescribeS3AccessPointAttachments({ client }, { MaxResults: 100, Filters: [{
+        Name: 'volume-id',
+        Values: [volumeId]
+    }] })) {
+        if (page.S3AccessPointAttachments) {
+            volumeAccessPoints.push(...page.S3AccessPointAttachments);
+        }
+    }
+    return volumeAccessPoints;
 }
 
 export async function listBackups(region: string): Promise<any[]> {
@@ -184,6 +198,32 @@ export async function addVolume(svmId: string, name: string, sizeInMB: number, r
     }
 }
 
+export async function createAndAttachS3AccessPoint(volumeId: string, region: string, name: string, unixUserName: string) {
+    try {
+        const client = new FSxClient({ region: region, credentials: { accessKeyId: state.currentAccessKeyId, secretAccessKey: state.currentSecretAccessKey } });
+        const command = new CreateAndAttachS3AccessPointCommand({
+            Name: name,
+            Type: 'ONTAP',
+            OntapConfiguration: {
+                VolumeId: volumeId,
+                FileSystemIdentity: {
+                    Type: 'UNIX',
+                    UnixUser: {
+                        Name: unixUserName,
+                    }
+                }
+            }
+        });
+        await client.send(command);
+        state.reporter.sendTelemetryEvent(create_s3_access_point_success, { region, volumeId });
+        return;
+    } catch(error) {
+        Logger.log(`Error creating S3 access point: ${(error as Error).message}`, LogLevel.Error, error as Error);
+        console.error("Error creating S3 access point:", error);
+        state.reporter.sendTelemetryEvent(create_s3_access_point_success, { region, volumeId, error: (error as Error).message });
+        throw error;
+    }
+}
 export async function getEntities(entities: string[], extraData?: {fsMetrics: string[], volMetrics: string[]}): Promise<{[key: string]: any[]}> {
     const results: any = {
         filesystems: [],

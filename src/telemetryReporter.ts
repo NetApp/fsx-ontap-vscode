@@ -16,6 +16,8 @@ export const create_snapshot_failure = 'create-snapshot-failure';
 export const select_profile = 'select-profile';
 export const extension_activated = 'extension-activated';
 export const extension_deactivated = 'extension-deactivated';
+export const create_s3_access_point_success = 'create-s3-access-point-success';
+export const create_s3_access_point_failure = 'create-s3-access-point-failure';
 
 export class FsxTelemetryReporter {
 

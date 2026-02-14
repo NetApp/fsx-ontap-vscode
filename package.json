@@ -6,7 +6,7 @@
   },
   "displayName": "NetApp FSx ONTAP",
   "description": "Manage Amazon Fsx for ONTAP file systems from VScode",
-  "version": "1.0.8",
+  "version": "1.0.9",
   "engines": {
     "vscode": "^1.102.0"
   },
@@ -181,6 +181,24 @@
         "title": "Manage AWS Credentials",
         "category": "NetApp FSx ONTAP",
         "icon": "$(key)"
+      },
+      {
+        "command": "netapp-fsx-ontap.open-s3-object",
+        "title": "Open S3 Object",
+        "category": "NetApp FSx ONTAP",
+        "icon": "$(file-code)"
+      },
+      {
+        "command": "netapp-fsx-ontap.list-s3-objects-next-page",
+        "title": "List S3 Objects",
+        "category": "NetApp FSx ONTAP",
+        "icon": "$(file-code)"
+      },
+      {
+        "command": "netapp-fsx-ontap.create-s3-volume-access-point",
+        "title": "Create S3 Volume Access Point",
+        "category": "NetApp FSx ONTAP",
+        "icon": "$(add)"
       }
     ],
     "menus": {
@@ -266,6 +284,11 @@
           "command": "netapp-fsx-ontap.createSnapshot",
           "when": "viewItem == volume",
           "group": "inline"
+        },
+        {
+          "command": "netapp-fsx-ontap.create-s3-volume-access-point",
+          "when": "viewItem == volume",
+          "group": "inline"
         }
       ]
     }
@@ -298,7 +321,8 @@
   "dependencies": {
     "@aws-sdk/client-bedrock-runtime": "^3.948.0",
     "@aws-sdk/client-cloudwatch": "^3.922.0",
-    "@aws-sdk/client-fsx": "^3.922.0",
+    "@aws-sdk/client-fsx": "^3.985.0",
+    "@aws-sdk/client-s3": "^3.988.0",
     "@aws-sdk/client-sts": "^3.922.0",
     "@smithy/shared-ini-file-loader": "^4.3.4",
     "@vscode/extension-telemetry": "^1.1.0",

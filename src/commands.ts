@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { state } from './state';
-import { addSvm, addVolume } from './FileSystemApis';
+import { addSvm, addVolume, createAndAttachS3AccessPoint } from './FileSystemApis';
 import { SSHService } from './sshService';
 import { select_profile, ssh_to_fs } from './telemetryReporter';
 import { executeOntapCommands } from './ontap_executor';
@@ -118,6 +118,24 @@ export async function createVolume(svmId: string, region: string, refreshFunc: (
             });
         }
        
+    }
+}
+
+export async function createS3VolumeAccessPoint(volumeId: string, region: string, refreshFunc: () => void) {
+    const window = vscode.window;
+    const name = await window.showInputBox({
+        placeHolder: 'Enter Access Point name',
+    });
+    const unixUserName = await window.showInputBox({
+        placeHolder: 'Enter unix user name',
+    });
+    if (name && unixUserName) {
+        createAndAttachS3AccessPoint(volumeId, region, name, unixUserName).then(() => {
+            window.showInformationMessage(`S3 volume access point created successfully.`);
+            refreshFunc();
+        }).catch(error => {
+            window.showErrorMessage(`Error creating S3 volume access point: ${error.message}`);
+        });
     }
 }
 
