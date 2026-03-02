@@ -19,6 +19,7 @@ export const VolumeMetrics = ['DataReadBytes', 'DataWriteBytes', 'DataReadOperat
 ];
 
 export async function listFileSystems(region: string): Promise<FileSystem[]> {
+    state.reporter.sentTelemetryTypeEvent('GET', 'list-filesystems', { region });
     const client = new FSxClient({ region, credentials: { accessKeyId: state.currentAccessKeyId, secretAccessKey: state.currentSecretAccessKey } });
     const fileSystems: FileSystem[] = [];
     for await (const page of paginateDescribeFileSystems({ client }, { MaxResults: 100 })) {
@@ -31,6 +32,7 @@ export async function listFileSystems(region: string): Promise<FileSystem[]> {
 }
 
 export async function listAllSvms(region: string): Promise<StorageVirtualMachine[]> {
+    state.reporter.sentTelemetryTypeEvent('GET', 'list-svms', { region });
     const client = new FSxClient({ region, credentials: { accessKeyId: state.currentAccessKeyId, secretAccessKey: state.currentSecretAccessKey } });
     const svms: StorageVirtualMachine[] = [];
     for await (const page of paginateDescribeStorageVirtualMachines({ client }, { MaxResults: 100 })) {
@@ -43,6 +45,7 @@ export async function listAllSvms(region: string): Promise<StorageVirtualMachine
 
 
 export async function listSvms(fileSystemId: string, region: string): Promise<StorageVirtualMachine[]> {
+    state.reporter.sentTelemetryTypeEvent('GET', 'list-svms', { region, fileSystemId });
     const client = new FSxClient({ region, credentials: { accessKeyId: state.currentAccessKeyId, secretAccessKey: state.currentSecretAccessKey } });
     const svms: StorageVirtualMachine[] = [];
     for await (const page of paginateDescribeStorageVirtualMachines({ client }, { MaxResults: 100, Filters: [{
@@ -57,6 +60,7 @@ export async function listSvms(fileSystemId: string, region: string): Promise<St
 }
 
 export async function listAllVolumes(region: string): Promise<Volume[]> {
+    state.reporter.sentTelemetryTypeEvent('GET', 'list-volumes', { region });
     const client = new FSxClient({ region, credentials: { accessKeyId: state.currentAccessKeyId, secretAccessKey: state.currentSecretAccessKey } });
     const volumes: Volume[] = [];
     for await (const page of paginateDescribeVolumes({ client }, { MaxResults: 100 })) {
@@ -68,6 +72,7 @@ export async function listAllVolumes(region: string): Promise<Volume[]> {
 }
 
 export async function listVolumes(svmId: string, fileSystemId: string, region: string): Promise<Volume[]> {
+    state.reporter.sentTelemetryTypeEvent('GET', 'list-volumes', { region, svmId, fileSystemId });
     const client = new FSxClient({ region, credentials: { accessKeyId: state.currentAccessKeyId, secretAccessKey: state.currentSecretAccessKey } });
     const volumes: Volume[] = [];
     for await (const page of paginateDescribeVolumes({ client }, { MaxResults: 100, Filters: [{
@@ -85,6 +90,7 @@ export async function listVolumes(svmId: string, fileSystemId: string, region: s
 }
 
 export async function listVolumeAccessPoints(volumeId: string, region: string): Promise<S3AccessPointAttachment[]> {
+    state.reporter.sentTelemetryTypeEvent('GET', 'list-volume-access-points', { region, volumeId });
     const client = new FSxClient({ region, credentials: { accessKeyId: state.currentAccessKeyId, secretAccessKey: state.currentSecretAccessKey } });
     const volumeAccessPoints: S3AccessPointAttachment[] = [];
     for await (const page of paginateDescribeS3AccessPointAttachments({ client }, { MaxResults: 100, Filters: [{
@@ -99,6 +105,7 @@ export async function listVolumeAccessPoints(volumeId: string, region: string): 
 }
 
 export async function listBackups(region: string): Promise<any[]> {
+    state.reporter.sentTelemetryTypeEvent('GET', 'list-backups', { region });
     const client = new FSxClient({ region, credentials: { accessKeyId: state.currentAccessKeyId, secretAccessKey: state.currentSecretAccessKey } });
     const backups: any[] = [];
     for await (const page of paginateDescribeBackups({ client }, { MaxResults: 100 })) {
@@ -110,7 +117,7 @@ export async function listBackups(region: string): Promise<any[]> {
 }
 
 export async function getFileSystemMetrics(region: string, fsMetrics: string[], volMetrics: string[]): Promise<any> {
-
+    state.reporter.sentTelemetryTypeEvent('GET', 'get-file-system-metrics', { region, fsMetrics: fsMetrics.join(','), volMetrics: volMetrics.join(',') });
     const client = new CloudWatchClient({ region, credentials: { accessKeyId: state.currentAccessKeyId, secretAccessKey: state.currentSecretAccessKey } });
     const results: Record<string, any[]> = {};
     for(const key of fsMetrics) {
@@ -153,6 +160,7 @@ export async function getFileSystemMetrics(region: string, fsMetrics: string[], 
 }
 
 export async function addSvm(fileSystemId: string, name: string, region: string) {
+    state.reporter.sentTelemetryTypeEvent('PUT', 'add-svm', { region, fileSystemId, name });
     const client = new FSxClient({ region: region, credentials: { accessKeyId: state.currentAccessKeyId, secretAccessKey: state.currentSecretAccessKey } });
     const command = new CreateStorageVirtualMachineCommand({
         FileSystemId: fileSystemId,
@@ -171,6 +179,7 @@ export async function addSvm(fileSystemId: string, name: string, region: string)
 }
 
 export async function addVolume(svmId: string, name: string, sizeInMB: number, region: string) {
+    state.reporter.sentTelemetryTypeEvent('PUT', 'add-volume', { region, svmId, name, sizeInMB: sizeInMB.toString() });
     const client = new FSxClient({ region: region, credentials: { accessKeyId: state.currentAccessKeyId, secretAccessKey: state.currentSecretAccessKey } });
     const command = new CreateVolumeCommand({
         VolumeType: 'ONTAP',
@@ -199,6 +208,7 @@ export async function addVolume(svmId: string, name: string, sizeInMB: number, r
 }
 
 export async function createAndAttachS3AccessPoint(volumeId: string, region: string, name: string, unixUserName: string) {
+    state.reporter.sentTelemetryTypeEvent('PUT', 'create-and-attach-s3-access-point', { region, volumeId, name, unixUserName });
     try {
         const client = new FSxClient({ region: region, credentials: { accessKeyId: state.currentAccessKeyId, secretAccessKey: state.currentSecretAccessKey } });
         const command = new CreateAndAttachS3AccessPointCommand({

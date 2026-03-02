@@ -6,6 +6,7 @@ export async function listObjects(
     region: string,
     continuationToken?: string
 ): Promise<{ objects: _Object[]; nextContinuationToken?: string; isTruncated: boolean }> {
+    state.reporter.sentTelemetryTypeEvent('GET', 'list-objects', { region, bucketName });
     const client = new S3Client({
         region,
         credentials: {

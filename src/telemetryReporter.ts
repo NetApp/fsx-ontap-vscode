@@ -48,6 +48,10 @@ export class FsxTelemetryReporter {
         }
     }
 
+    public sentTelemetryTypeEvent(evetType: 'GET' | 'PUT', eventName: string, properties?: { [key: string]: string  }, measurements?: { [key: string]: number }) {
+        this.sendTelemetryEvent(`${evetType}.${eventName}`, properties, measurements);
+    }
+
     public sendTelemetryEvent(eventName: string, properties?: { [key: string]: string  }, measurements?: { [key: string]: number }) {
         if (!this.telemetryEnabled || !this.reporter) {
             // Optionally log to console in development
