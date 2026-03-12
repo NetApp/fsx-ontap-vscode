@@ -1,7 +1,7 @@
-import { CreateAndAttachS3AccessPointCommand, CreateStorageVirtualMachineCommand, CreateVolumeCommand, FileSystem, FSxClient, ListTagsForResourceCommand, paginateDescribeBackups, paginateDescribeFileSystems, paginateDescribeS3AccessPointAttachments, paginateDescribeStorageVirtualMachines, paginateDescribeVolumes, S3AccessPointAttachment, StorageVirtualMachine, Volume } from "@aws-sdk/client-fsx";
+import { CreateAndAttachS3AccessPointCommand, CreateStorageVirtualMachineCommand, CreateVolumeCommand, DetachAndDeleteS3AccessPointCommand, FileSystem, FSxClient, ListTagsForResourceCommand, paginateDescribeBackups, paginateDescribeFileSystems, paginateDescribeS3AccessPointAttachments, paginateDescribeStorageVirtualMachines, paginateDescribeVolumes, S3AccessPointAttachment, StorageVirtualMachine, Volume } from "@aws-sdk/client-fsx";
 import {CloudWatchClient, GetMetricDataCommand, GetMetricStatisticsCommand, GetMetricStatisticsCommandInput, ListMetricsCommand} from "@aws-sdk/client-cloudwatch";
 import { state } from "./state";
-import { create_s3_access_point_success, create_svm_failure, create_svm_success, create_volume_failure, create_volume_success } from "./telemetryReporter";
+import { create_s3_access_point_success, create_svm_failure, create_svm_success, create_volume_failure, create_volume_success, delete_s3_access_point_failure, delete_s3_access_point_success } from "./telemetryReporter";
 import { Logger, LogLevel } from "./logger";
 
 export const FileSystemMetrics = ['NetworkThroughputUtilization', 'NetworkSentBytes', 'NetworkReceivedBytes', 'DataReadBytes', 'DataWriteBytes',
@@ -231,6 +231,24 @@ export async function createAndAttachS3AccessPoint(volumeId: string, region: str
         Logger.log(`Error creating S3 access point: ${(error as Error).message}`, LogLevel.Error, error as Error);
         console.error("Error creating S3 access point:", error);
         state.reporter.sendTelemetryEvent(create_s3_access_point_success, { region, volumeId, error: (error as Error).message });
+        throw error;
+    }
+}
+
+export async function detacheAndDeleteS3AccessPoint(name: string, region: string) {
+    state.reporter.sentTelemetryTypeEvent('PUT', 'delete-s3-volume-access-point', { region, name });
+    try {
+        const client = new FSxClient({ region: region, credentials: { accessKeyId: state.currentAccessKeyId, secretAccessKey: state.currentSecretAccessKey } });
+        const command = new DetachAndDeleteS3AccessPointCommand({
+            Name: name
+        });
+        await client.send(command);
+        state.reporter.sendTelemetryEvent(delete_s3_access_point_success, { region, name });
+        return;
+    } catch(error) {
+        Logger.log(`Error deleting S3 access point: ${(error as Error).message}`, LogLevel.Error, error as Error);
+        console.error("Error deleting S3 access point:", error);
+        state.reporter.sendTelemetryEvent(delete_s3_access_point_failure, { region, name, error: (error as Error).message });
         throw error;
     }
 }

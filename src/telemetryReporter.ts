@@ -18,7 +18,8 @@ export const extension_activated = 'extension-activated';
 export const extension_deactivated = 'extension-deactivated';
 export const create_s3_access_point_success = 'create-s3-access-point-success';
 export const create_s3_access_point_failure = 'create-s3-access-point-failure';
-
+export const delete_s3_access_point_success = 'delete-s3-access-point-success';
+export const delete_s3_access_point_failure = 'delete-s3-access-point-failure';
 export class FsxTelemetryReporter {
 
     private reporter: TelemetryReporter | undefined;

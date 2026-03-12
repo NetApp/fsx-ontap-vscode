@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import { FileSystem, S3AccessPointAttachment, StorageVirtualMachine, Volume} from "@aws-sdk/client-fsx";
 import { _Object } from '@aws-sdk/client-s3';
+import path from 'path';
 
 export class FileSystemsItem extends vscode.TreeItem {
     constructor(
@@ -38,7 +39,7 @@ export class SVMItem extends vscode.TreeItem {
 
 		this.tooltip = `${this.name}`;
 		this.description = this.id;
-		this.iconPath = new vscode.ThemeIcon('library');
+		this.iconPath = new vscode.ThemeIcon('folder-library');
 	}
 
 	/*iconPath = {
@@ -93,7 +94,11 @@ export class S3AccessPointItem extends vscode.TreeItem {
 
 		this.tooltip = `${this.name}`;
 		this.description = this.id;
-		this.iconPath = new vscode.ThemeIcon('folder-library');
+		this.iconPath = {
+			light: vscode.Uri.file(path.join(__filename, '..', '..', 'resources', 'light', 'bucket.svg')),
+			dark: vscode.Uri.file(path.join(__filename, '..', '..', 'resources', 'dark', 'bucket.svg'))
+		};
+		
 	}
 
 	contextValue = 's3-access-point';
@@ -138,6 +143,11 @@ export class ObjectItem extends vscode.TreeItem {
         this.tooltip = `${this.name}`;
         this.description = `${this.object.Size?.toString() || ''} bytes, ${this.lastModified}`;
         this.iconPath = new vscode.ThemeIcon('file');
+		this.command = {
+			command: 'netapp-fsx-ontap.open-s3-object',
+			title: 'Open S3 Object',
+			arguments: [this],
+		};
     }
 
     contextValue = 'object';

@@ -1,11 +1,16 @@
 import * as vscode from 'vscode';
+import * as os from 'os';
+import * as fs from 'fs';
+import * as path from 'path';
 import { state } from './state';
-import { addSvm, addVolume, createAndAttachS3AccessPoint } from './FileSystemApis';
+import { addSvm, addVolume, createAndAttachS3AccessPoint, detacheAndDeleteS3AccessPoint } from './FileSystemApis';
 import { SSHService } from './sshService';
 import { select_profile, ssh_to_fs } from './telemetryReporter';
 import { executeOntapCommands } from './ontap_executor';
 import { FileSystem } from '@aws-sdk/client-fsx';
 import { AwsCredentialsManager } from './awsCredentialsManager';
+import { getObject } from './S3Apis';
+import { ObjectItem } from './TreeItems';
 
 export async function selectRegion() {
      const window = vscode.window;
@@ -139,6 +144,36 @@ export async function createS3VolumeAccessPoint(volumeId: string, region: string
     }
 }
 
+export async function deleteS3VolumeAccessPoint(name: string, region: string, refreshFunc: () => void) {
+    const window = vscode.window;
+    const confirm = await window.showWarningMessage(`Are you sure you want to delete the S3 volume access point ${name}?`, { modal: true }, 'Delete');
+    if (confirm === 'Delete') {
+        detacheAndDeleteS3AccessPoint(name, region).then(() => {
+            window.showInformationMessage(`S3 volume access point deleted successfully.`);
+            refreshFunc();
+        }).catch(error => {
+            window.showErrorMessage(`Error deleting S3 volume access point: ${error.message}`);
+        });
+    }
+}
+
 export async function openCredentialsManager(context: vscode.ExtensionContext) {
     AwsCredentialsManager.createOrShow(context);
+}
+
+export async function openS3Object(item: ObjectItem) {
+    const bucketName = item.accessPoint.S3AccessPoint?.ResourceARN || '';
+    const key = item.object.Key || '';
+    try {
+        const content = await getObject(bucketName, key, item.region);
+        const fileName = key.split('/').pop() || key;
+        const tmpDir = path.join(os.tmpdir(), 'fsx-ontap-s3');
+        fs.mkdirSync(tmpDir, { recursive: true });
+        const tmpFile = path.join(tmpDir, fileName);
+        fs.writeFileSync(tmpFile, content, 'utf-8');
+        const doc = await vscode.workspace.openTextDocument(vscode.Uri.file(tmpFile));
+        await vscode.window.showTextDocument(doc, { preview: true });
+    } catch (error: any) {
+        vscode.window.showErrorMessage(`Error opening S3 object "${key}": ${error.message}`);
+    }
 }

@@ -1,10 +1,10 @@
 // The module 'vscode' contains the VS Code extensibility API
 // Import the module and reference it with the alias vscode in your code below
 import * as vscode from 'vscode';
-import { addOntapLoginDetails, addSvmCommand, createS3VolumeAccessPoint, createSnapshot, createVolume, openCredentialsManager, selectProfile, selectRegion, sshToFileSystem } from './commands';
+import { addOntapLoginDetails, addSvmCommand, createS3VolumeAccessPoint, createSnapshot, createVolume, deleteS3VolumeAccessPoint, openCredentialsManager, openS3Object, selectProfile, selectRegion, sshToFileSystem } from './commands';
 import { state } from './state';
 import { FileSystemsTree } from './FileSystemsTree';
-import { S3NextPageItem } from './TreeItems';
+import { S3AccessPointItem, S3NextPageItem } from './TreeItems';
 import { SimpleScriptCreator } from './SimpleScriptCreator';
 import { handleChatRequest } from './copilot_herlper';
 import { WelcomeEditor } from './WelcomeEditor';
@@ -124,6 +124,14 @@ export async function activate(context: vscode.ExtensionContext) {
 		await treeDataProvider.loadNextPage(nextPageItem);
 	});
 
+	const deleteS3VolumeAccessPointCommand = vscode.commands.registerCommand('netapp-fsx-ontap.delete-s3-volume-access-point', async (accessPoint: S3AccessPointItem) => {
+		await deleteS3VolumeAccessPoint(accessPoint.name, accessPoint.region, () => treeDataProvider.refresh());
+	});
+
+	const openS3ObjectCommand = vscode.commands.registerCommand('netapp-fsx-ontap.open-s3-object', async (item: any) => {
+		await openS3Object(item);
+	});
+
 	const chatParticipant = vscode.chat.createChatParticipant('netapp-fsx-ontap.helper', handleChatRequest);
 	chatParticipant.iconPath = vscode.Uri.file(context.asAbsolutePath('resources/chat.svg'));
 
@@ -149,7 +157,9 @@ export async function activate(context: vscode.ExtensionContext) {
 		registerUpdateOntapLoginDetailsCommand,
 		manageCredentialsCommand,
 		createS3VolumeAccessPointCommand,
-		listS3ObjectsNextPageCommand
+		listS3ObjectsNextPageCommand,
+		deleteS3VolumeAccessPointCommand,
+		openS3ObjectCommand
 	);
 
 	state.reporter.sendTelemetryEvent(extension_activated, { });
