@@ -8,7 +8,7 @@
   "description": "Manage Amazon Fsx for ONTAP file systems from VScode",
   "version": "1.0.10",
   "engines": {
-    "vscode": "^1.102.0"
+    "vscode": "^1.104.0"
   },
   "categories": [
     "Chat",

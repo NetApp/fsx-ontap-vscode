@@ -6,7 +6,7 @@ import { state } from './state';
 import { FileSystemsTree } from './FileSystemsTree';
 import { S3AccessPointItem, S3NextPageItem } from './TreeItems';
 import { SimpleScriptCreator } from './SimpleScriptCreator';
-import { handleChatRequest } from './copilot_herlper';
+import { handleChatRequest, FollowupMetadata } from './copilot_herlper';
 import { WelcomeEditor } from './WelcomeEditor';
 import { Logger } from './logger';
 import { extension_activated, extension_deactivated } from './telemetryReporter';
@@ -134,6 +134,18 @@ export async function activate(context: vscode.ExtensionContext) {
 
 	const chatParticipant = vscode.chat.createChatParticipant('netapp-fsx-ontap.helper', handleChatRequest);
 	chatParticipant.iconPath = vscode.Uri.file(context.asAbsolutePath('resources/chat.svg'));
+	chatParticipant.followupProvider = {
+		provideFollowups(result: vscode.ChatResult, _context: vscode.ChatContext, _token: vscode.CancellationToken): vscode.ChatFollowup[] {
+			const followups = (result.metadata as any)?.followups as FollowupMetadata | undefined;
+			if (!followups) {
+				return [];
+			}
+			return followups.options.map(option => ({
+				prompt: option.value,
+				label: option.label
+			}));
+		}
+	};
 
 	context.subscriptions.push(
 		refreshCommand,

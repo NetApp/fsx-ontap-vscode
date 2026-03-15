@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import { CopilotModel } from './models/copilot';
 import { BedrockModel } from './models/bedrock';
+import { ChatTool } from './tools';
 
 export type MessageType = {
     role: 'user' | 'assistant' | 'system';
@@ -8,6 +9,13 @@ export type MessageType = {
 
 export interface Model {
     sendMessage: (message: string, messageType: MessageType) => Promise<string>;
+    sendMessageWithTools: (
+        systemPrompt: string,
+        userMessage: string,
+        tools: ChatTool[],
+        stream: vscode.ChatResponseStream,
+        token: vscode.CancellationToken
+    ) => Promise<string>;
     init: () => Promise<void>;
     type: string;
 }
