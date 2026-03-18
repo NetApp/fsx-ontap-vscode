@@ -1,7 +1,7 @@
 // The module 'vscode' contains the VS Code extensibility API
 // Import the module and reference it with the alias vscode in your code below
 import * as vscode from 'vscode';
-import { addOntapLoginDetails, addSvmCommand, createS3VolumeAccessPoint, createSnapshot, createVolume, deleteS3VolumeAccessPoint, openCredentialsManager, openS3Object, selectProfile, selectRegion, sshToFileSystem } from './commands';
+import { addOntapLoginDetails, addSvmCommand, createS3VolumeAccessPoint, createSnapshot, createVolume, deleteS3VolumeAccessPoint, openCredentialsManager, openS3Object, selectProfile, selectRegion, showMountPoint, sshToFileSystem } from './commands';
 import { state } from './state';
 import { FileSystemsTree } from './FileSystemsTree';
 import { S3AccessPointItem, S3NextPageItem } from './TreeItems';
@@ -132,6 +132,10 @@ export async function activate(context: vscode.ExtensionContext) {
 		await openS3Object(item);
 	});
 
+	const showMountPointCommand = vscode.commands.registerCommand('netapp-fsx-ontap.showMountPoint', async (volume: any) => {
+		await showMountPoint(volume.volume, volume.svm);
+	});
+
 	const chatParticipant = vscode.chat.createChatParticipant('netapp-fsx-ontap.helper', handleChatRequest);
 	chatParticipant.iconPath = vscode.Uri.file(context.asAbsolutePath('resources/chat.svg'));
 	chatParticipant.followupProvider = {
@@ -171,7 +175,8 @@ export async function activate(context: vscode.ExtensionContext) {
 		createS3VolumeAccessPointCommand,
 		listS3ObjectsNextPageCommand,
 		deleteS3VolumeAccessPointCommand,
-		openS3ObjectCommand
+		openS3ObjectCommand,
+		showMountPointCommand
 	);
 
 	state.reporter.sendTelemetryEvent(extension_activated, { });

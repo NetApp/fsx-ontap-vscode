@@ -7,7 +7,7 @@ import { addSvm, addVolume, createAndAttachS3AccessPoint, detacheAndDeleteS3Acce
 import { SSHService } from './sshService';
 import { select_profile, ssh_to_fs } from './telemetryReporter';
 import { executeOntapCommands, OntapCommandResult } from './ontap_executor';
-import { FileSystem } from '@aws-sdk/client-fsx';
+import { FileSystem, StorageVirtualMachine, Volume } from '@aws-sdk/client-fsx';
 import { AwsCredentialsManager } from './awsCredentialsManager';
 import { getObject } from './S3Apis';
 import { ObjectItem } from './TreeItems';
@@ -191,5 +191,41 @@ export async function openS3Object(item: ObjectItem) {
         await vscode.window.showTextDocument(doc, { preview: false });
     } catch (error: any) {
         vscode.window.showErrorMessage(`Error opening S3 object "${key}": ${error.message}`);
+    }
+}
+
+export async function showMountPoint(volume: Volume, svm: StorageVirtualMachine) {
+    const junctionPath = volume.OntapConfiguration?.JunctionPath;
+    if (!junctionPath) {
+        vscode.window.showWarningMessage(`No junction path configured for volume "${volume.Name}".`);
+        return;
+    }
+
+    const nfsDns = svm.Endpoints?.Nfs?.DNSName;
+    const smbDns = svm.Endpoints?.Smb?.DNSName;
+
+    const items: vscode.QuickPickItem[] = [];
+
+    if (nfsDns) {
+        const nfsMount = `sudo mount -t nfs ${nfsDns}:${junctionPath} /mount/point`;
+        items.push({ label: '$(terminal) NFS Mount Command', detail: nfsMount, description: 'Copy to clipboard' });
+    }
+    if (smbDns) {
+        const smbPath = `\\\\${smbDns}\\${volume.Name}`;
+        items.push({ label: '$(terminal) SMB Mount Path', detail: smbPath, description: 'Copy to clipboard' });
+    }
+
+    if (items.length === 0) {
+        vscode.window.showWarningMessage(`No NFS or SMB endpoints found for SVM "${svm.Name}".`);
+        return;
+    }
+
+    const selected = await vscode.window.showQuickPick(items, {
+        placeHolder: `Mount point for volume "${volume.Name}" (${junctionPath})`,
+    });
+
+    if (selected?.detail) {
+        await vscode.env.clipboard.writeText(selected.detail);
+        vscode.window.showInformationMessage('Mount command copied to clipboard.');
     }
 }
