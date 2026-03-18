@@ -6,11 +6,17 @@ import { state } from './state';
 import { addSvm, addVolume, createAndAttachS3AccessPoint, detacheAndDeleteS3AccessPoint } from './FileSystemApis';
 import { SSHService } from './sshService';
 import { select_profile, ssh_to_fs } from './telemetryReporter';
-import { executeOntapCommands } from './ontap_executor';
+import { executeOntapCommands, OntapCommandResult } from './ontap_executor';
 import { FileSystem } from '@aws-sdk/client-fsx';
 import { AwsCredentialsManager } from './awsCredentialsManager';
 import { getObject } from './S3Apis';
 import { ObjectItem } from './TreeItems';
+
+function getOntapErrorMessage(results: OntapCommandResult[]): string | null {
+    const failed = results.find(r => !r.success);
+    if (!failed) { return null; }
+    return failed.error || failed.output || `Command "${failed.command}" failed with exit code ${failed.exitCode}`;
+}
 
 export async function selectRegion() {
      const window = vscode.window;
@@ -72,7 +78,12 @@ export async function addOntapLoginDetails(fileSystem: any, refreshFunc: () => v
     try{
         const connectionDetails = await SSHService.promptForConnectionDetails(fileSystem.fs.OntapConfiguration.Endpoints.Management.DNSName ,
          fileSystem.id, fileSystem.fs.OntapConfiguration.Endpoints.Management.IpAddresses[0], true);
-        await executeOntapCommands(fileSystem.fs, ['volume show'], connectionDetails);
+        const { result } = await executeOntapCommands(fileSystem.fs, ['volume show'], connectionDetails);
+        const ontapError = getOntapErrorMessage(result);
+        if (ontapError) {
+            vscode.window.showErrorMessage(`ONTAP login validation failed: ${ontapError}`);
+            return;
+        }
         await state.context.secrets.store(`sshKey-${fileSystem.id}-${fileSystem.region}`, JSON.stringify(connectionDetails));
         vscode.window.showInformationMessage(`ONTAP login details for file system ${fileSystem.id} added successfully.`);
         refreshFunc();
@@ -94,7 +105,12 @@ export async function createSnapshot(fs: FileSystem, svmName: string, volumeName
             return;
         }
         vscode.window.showInformationMessage(`Creating snapshot ${snapshotName} on volume ${volumeName}...`);
-        await executeOntapCommands(fs, [`volume snapshot create -vserver ${svmName} -volume ${volumeName} -snapshot ${snapshotName}`]);
+        const { result } = await executeOntapCommands(fs, [`volume snapshot create -vserver ${svmName} -volume ${volumeName} -snapshot ${snapshotName}`]);
+        const ontapError = getOntapErrorMessage(result);
+        if (ontapError) {
+            vscode.window.showErrorMessage(`Error creating snapshot ${snapshotName}: ${ontapError}`);
+            return;
+        }
         state.reporter.sendTelemetryEvent('create_snapshot', { region: region, volumeName: volumeName, svmName: svmName, snapshotName: snapshotName });
         vscode.window.showInformationMessage(`Snapshot ${snapshotName} created successfully on volume ${volumeName}.`);
     } catch (error) {
