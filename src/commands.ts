@@ -172,7 +172,7 @@ export async function openS3Object(item: ObjectItem) {
         const tmpFile = path.join(tmpDir, fileName);
         fs.writeFileSync(tmpFile, content, 'utf-8');
         const doc = await vscode.workspace.openTextDocument(vscode.Uri.file(tmpFile));
-        await vscode.window.showTextDocument(doc, { preview: true });
+        await vscode.window.showTextDocument(doc, { preview: false });
     } catch (error: any) {
         vscode.window.showErrorMessage(`Error opening S3 object "${key}": ${error.message}`);
     }
