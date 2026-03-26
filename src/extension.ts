@@ -9,7 +9,8 @@ import { SimpleScriptCreator } from './SimpleScriptCreator';
 import { handleChatRequest, FollowupMetadata } from './copilot_herlper';
 import { WelcomeEditor } from './WelcomeEditor';
 import { Logger } from './logger';
-import { extension_activated, extension_deactivated } from './telemetryReporter';
+import { extension_activated, extension_deactivated, filesystems_count } from './telemetryReporter';
+import { listFileSystems } from './FileSystemApis';
 
 let activationTime: number = 0;
 // This method is called when your extension is activated
@@ -180,6 +181,34 @@ export async function activate(context: vscode.ExtensionContext) {
 	);
 
 	state.reporter.sendTelemetryEvent(extension_activated, { });
+
+	reportFileSystemsCount();
+}
+
+async function reportFileSystemsCount() {
+	if (!state.currentProfile) {
+		return;
+	}
+	try {
+		const regions = state.getSelectedRegions();
+		const counts = await Promise.all(regions.map(async region => {
+			try {
+				const fileSystems = await listFileSystems(region);
+				return fileSystems.length;
+			} catch {
+				return 0;
+			}
+		}));
+		const total = counts.reduce((sum, c) => sum + c, 0);
+		state.reporter.sendTelemetryEvent(filesystems_count, {
+			regions: regions.join(','),
+		}, {
+			total,
+			regionsCount: regions.length,
+		});
+	} catch {
+		// silently ignore telemetry failures
+	}
 }
 
 // This method is called when your extension is deactivated
