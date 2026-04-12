@@ -8,6 +8,7 @@ Access FSx for ONTAP storage management capabilities directly from VS Code. Mana
 * Resource Management: Browse and manage FSx file systems, SVMs and volumes.
 * Single-click ONTAP CLI access: Open ONTAP CLI in a single click using the VS Code terminal.
 * One-Click Operations: Create SVMs, Volumes and snapshots, generate mount scripts and deploy templates.
+* View the content of the files in your volumes.
 ### AI-Powered Chat Integration
 * @fsx-ontap Chat Participant: Leverage Bedrock or GitHub Co-pilot to query your AWS FSx for ONTAP storage resources.
 * @fsx-ontap /filesystem : Use natural language to query ONTAP (FSx for ONTAP OS), with no need for prior ONTAP knowledge.
@@ -19,6 +20,7 @@ Access FSx for ONTAP storage management capabilities directly from VS Code. Mana
 * AWS Account: With access to AWS FSx for ONTAP
 * GitHub Copilot: For AI-powered chat features (optional but recommended)
 * Amazon Bedrock: For AI-powered chat features (optional but recommended)
+* S3 Access Point: For viewing the contents of your volumes (optional)
 ## Getting Started
 1. Open the FSx for ONTAP toolkit extension
 ![OpenTookhit](./resources/OpenToolkit.gif)
@@ -36,6 +38,11 @@ button choose the AWS credential profile you'd like to work with.
 Using the extension you'll be able to view all of your FSx for ONTAP File Systems, SVMs and volumes
 across all the selected AWS regions.
 
+### View the contents of your volumes
+Once you have configured a [S3 Access Point](https://docs.netapp.com/us-en/workload-fsx-ontap/manage-s3-access-points.html)
+for a volume, you can view the contents of that volume by first expanding the volume to reveal the Access Point, then
+expanding Access Point to reveal all the files within the volume. Simply click on a file to see the contents:
+![s3_ap](./resources/S3_AP.gif)
 ### SSH to ONTAP
 You can easily SSH into the file system without having to memorize IP addresses or file system hostnames.
 Just click on the "shell" icon and the extension will prompt you for the username and connection method. You can connect

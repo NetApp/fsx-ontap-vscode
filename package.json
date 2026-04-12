@@ -195,6 +195,12 @@
         "icon": "$(file-code)"
       },
       {
+        "command": "netapp-fsx-ontap.showMountPoint",
+        "title": "Show Mount Point",
+        "category": "NetApp FSx ONTAP",
+        "icon": "$(link-external)"
+      },
+      {
         "command": "netapp-fsx-ontap.create-s3-volume-access-point",
         "title": "Create S3 Volume Access Point",
         "category": "NetApp FSx ONTAP",
@@ -292,6 +298,11 @@
           "command": "netapp-fsx-ontap.createSnapshot",
           "when": "viewItem == volume",
           "group": "inline"
+        },
+        {
+          "command": "netapp-fsx-ontap.showMountPoint",
+          "when": "viewItem == volume",
+          "group": "navigation"
         },
         {
           "command": "netapp-fsx-ontap.create-s3-volume-access-point",
