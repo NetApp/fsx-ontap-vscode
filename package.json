@@ -6,7 +6,7 @@
   },
   "displayName": "NetApp FSx ONTAP",
   "description": "Manage Amazon Fsx for ONTAP file systems from VScode",
-  "version": "1.0.10",
+  "version": "1.0.11",
   "engines": {
     "vscode": "^1.104.0"
   },
@@ -213,6 +213,12 @@
         "command": "netapp-fsx-ontap.delete-s3-volume-access-point",
         "title": "Delete S3 Volume Access Point",
         "category": "NetApp FSx ONTAP"
+      },
+      {
+        "command": "netapp-fsx-ontap.upload-s3-object",
+        "title": "Upload File to Access Point",
+        "category": "NetApp FSx ONTAP",
+        "icon": "$(cloud-upload)"
       }
     ],
     "menus": {
@@ -310,6 +316,11 @@
           "group": "inline"
         },
         {
+          "command": "netapp-fsx-ontap.upload-s3-object",
+          "when": "viewItem == s3-access-point",
+          "group": "inline"
+        },
+        {
           "command": "netapp-fsx-ontap.delete-s3-volume-access-point",
           "when": "viewItem == s3-access-point",
           "group": "navigation"
@@ -350,7 +361,7 @@
     "@aws-sdk/client-sts": "^3.922.0",
     "@smithy/shared-ini-file-loader": "^4.3.4",
     "@vscode/extension-telemetry": "^1.1.0",
-    "axios": "^1.13.1",
+    "axios": "^1.16.1",
     "lodash": "^4.17.21",
     "ssh2": "^1.17.0"
   }

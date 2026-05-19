@@ -1,7 +1,7 @@
 // The module 'vscode' contains the VS Code extensibility API
 // Import the module and reference it with the alias vscode in your code below
 import * as vscode from 'vscode';
-import { addOntapLoginDetails, addSvmCommand, createS3VolumeAccessPoint, createSnapshot, createVolume, deleteS3VolumeAccessPoint, openCredentialsManager, openS3Object, selectProfile, selectRegion, showMountPoint, sshToFileSystem } from './commands';
+import { addOntapLoginDetails, addSvmCommand, createS3VolumeAccessPoint, createSnapshot, createVolume, deleteS3VolumeAccessPoint, openCredentialsManager, openS3Object, selectProfile, selectRegion, showMountPoint, sshToFileSystem, uploadS3Object } from './commands';
 import { state } from './state';
 import { FileSystemsTree } from './FileSystemsTree';
 import { S3AccessPointItem, S3NextPageItem } from './TreeItems';
@@ -133,6 +133,14 @@ export async function activate(context: vscode.ExtensionContext) {
 		await openS3Object(item);
 	});
 
+	const uploadS3ObjectCommand = vscode.commands.registerCommand('netapp-fsx-ontap.upload-s3-object', async (accessPoint: S3AccessPointItem) => {
+		await uploadS3Object(
+			accessPoint,
+			(element) => treeDataProvider.refresh(element),
+			(resourceArn) => treeDataProvider.invalidateS3Cache(resourceArn)
+		);
+	});
+
 	const showMountPointCommand = vscode.commands.registerCommand('netapp-fsx-ontap.showMountPoint', async (volume: any) => {
 		await showMountPoint(volume.volume, volume.svm);
 	});
@@ -177,6 +185,7 @@ export async function activate(context: vscode.ExtensionContext) {
 		listS3ObjectsNextPageCommand,
 		deleteS3VolumeAccessPointCommand,
 		openS3ObjectCommand,
+		uploadS3ObjectCommand,
 		showMountPointCommand
 	);
 

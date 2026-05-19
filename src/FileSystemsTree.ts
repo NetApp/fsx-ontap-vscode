@@ -32,9 +32,17 @@ export class FileSystemsTree implements vscode.TreeDataProvider<vscode.TreeItem>
         this._onDidChangeTreeData.fire(element);
     }
 
+    invalidateS3Cache(resourceArn: string): void {
+        this.s3ObjectCache.delete(resourceArn);
+    }
+
     /** Fetches the next page of S3 objects, appends to cache, and refreshes the access point node. */
     async loadNextPage(nextPageItem: S3NextPageItem): Promise<void> {
-        const result = await listObjects(nextPageItem.resourceArn, nextPageItem.region, nextPageItem.continuationToken);
+        const result = await listObjects(
+            nextPageItem.accessPoint.S3AccessPoint ?? { ResourceARN: nextPageItem.resourceArn },
+            nextPageItem.region,
+            nextPageItem.continuationToken
+        );
         const key = nextPageItem.resourceArn;
         const existing = this.s3ObjectCache.get(key);
         const objects = existing ? [...existing.objects, ...result.objects] : result.objects;
@@ -134,7 +142,7 @@ export class FileSystemsTree implements vscode.TreeDataProvider<vscode.TreeItem>
 
                     let entry = this.s3ObjectCache.get(resourceArn);
                     if (!entry) {
-                        const result = await listObjects(resourceArn, e.region);
+                        const result = await listObjects(e.accessPoint.S3AccessPoint ?? { ResourceARN: resourceArn }, e.region);
                         entry = { objects: result.objects, nextContinuationToken: result.nextContinuationToken };
                         this.s3ObjectCache.set(resourceArn, entry);
                     }

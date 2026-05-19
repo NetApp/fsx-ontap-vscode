@@ -9,8 +9,8 @@ import { select_profile, ssh_to_fs } from './telemetryReporter';
 import { executeOntapCommands, OntapCommandResult } from './ontap_executor';
 import { FileSystem, StorageVirtualMachine, Volume } from '@aws-sdk/client-fsx';
 import { AwsCredentialsManager } from './awsCredentialsManager';
-import { getObject } from './S3Apis';
-import { ObjectItem } from './TreeItems';
+import { getObject, putObject, resolveS3Bucket } from './S3Apis';
+import { ObjectItem, S3AccessPointItem } from './TreeItems';
 
 function getOntapErrorMessage(results: OntapCommandResult[]): string | null {
     const failed = results.find(r => !r.success);
@@ -177,18 +177,76 @@ export async function openCredentialsManager(context: vscode.ExtensionContext) {
     AwsCredentialsManager.createOrShow(context);
 }
 
+export async function uploadS3Object(
+    accessPoint: S3AccessPointItem,
+    refreshFunc: (element?: vscode.TreeItem) => void,
+    invalidateCache: (resourceArn: string) => void
+) {
+    const s3AccessPoint = accessPoint.accessPoint.S3AccessPoint;
+    const resourceArn = s3AccessPoint?.ResourceARN || '';
+    if (!resolveS3Bucket(s3AccessPoint)) {
+        vscode.window.showErrorMessage('S3 access point has no alias or resource ARN.');
+        return;
+    }
+
+    const fileUris = await vscode.window.showOpenDialog({
+        canSelectMany: false,
+        openLabel: 'Upload',
+    });
+    if (!fileUris?.length) {
+        return;
+    }
+
+    const filePath = fileUris[0].fsPath;
+    const defaultKey = path.basename(filePath);
+    const key = await vscode.window.showInputBox({
+        prompt: 'S3 object key',
+        value: defaultKey,
+        placeHolder: 'e.g. folder/my-file.txt',
+        validateInput: (value) => (value.trim() ? undefined : 'Key is required'),
+    });
+    if (!key?.trim()) {
+        return;
+    }
+
+    try {
+        await vscode.window.withProgress(
+            {
+                location: vscode.ProgressLocation.Notification,
+                title: `Uploading ${defaultKey} to ${accessPoint.name}`,
+                cancellable: false,
+            },
+            async () => {
+                const body = fs.readFileSync(filePath);
+                await putObject(s3AccessPoint!, key.trim(), accessPoint.region, body);
+            }
+        );
+        invalidateCache(resourceArn);
+        refreshFunc(accessPoint);
+        vscode.window.showInformationMessage(`Uploaded "${key.trim()}" to access point ${accessPoint.name}.`);
+    } catch (error: any) {
+        const hint = error.name === 'ServiceUnavailable'
+            ? ' The file system may be overloaded, or the access point may be misconfigured — try refreshing the tree and confirm the access point is AVAILABLE.'
+            : '';
+        vscode.window.showErrorMessage(`Error uploading to S3 access point "${accessPoint.name}": ${error.message}${hint}`);
+    }
+}
+
 export async function openS3Object(item: ObjectItem) {
-    const bucketName = item.accessPoint.S3AccessPoint?.ResourceARN || '';
+    const s3AccessPoint = item.accessPoint.S3AccessPoint;
     const key = item.object.Key || '';
     try {
-        const content = await getObject(bucketName, key, item.region);
-        const fileName = key.split('/').pop() || key;
+        const content = await getObject(s3AccessPoint ?? {}, key, item.region);
         const tmpDir = path.join(os.tmpdir(), 'fsx-ontap-s3');
         fs.mkdirSync(tmpDir, { recursive: true });
-        const tmpFile = path.join(tmpDir, fileName);
+        const safeKey = key.replace(/[/\\]/g, '__');
+        const tmpFile = path.join(tmpDir, safeKey);
         fs.writeFileSync(tmpFile, content, 'utf-8');
         const doc = await vscode.workspace.openTextDocument(vscode.Uri.file(tmpFile));
-        await vscode.window.showTextDocument(doc, { preview: false });
+        await vscode.window.showTextDocument(doc, {
+            preview: false,
+            viewColumn: vscode.ViewColumn.Active,
+        });
     } catch (error: any) {
         vscode.window.showErrorMessage(`Error opening S3 object "${key}": ${error.message}`);
     }
